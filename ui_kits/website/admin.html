@@ -3582,7 +3582,7 @@ function DirectorAdminView({ profile }) {
         </button>
       </header>
       <div style={{ padding: 24, display: "grid", gap: 18 }}>
-        <label className="cms-field cms-field--photo">
+        <div className="cms-field cms-field--photo">
           <span>센터장 사진</span>
           <div className="cms-photo-input">
             <div className="cms-photo-input__preview" style={d.photo ? { backgroundImage: `url(${d.photo})` } : undefined}>
@@ -3601,7 +3601,7 @@ function DirectorAdminView({ profile }) {
               <div className="muted" style={{fontSize:12, lineHeight:1.5, marginTop:4}}>비워두면 기본 등록된 사진이 사용됩니다.</div>
             </div>
           </div>
-        </label>
+        </div>
 
         <div className="cms-field-row">
           <FieldText label="성함" value={d.name} onChange={(v)=>update("name", v)} />
@@ -4229,7 +4229,7 @@ function CrudModal({ title, draft, onClose, onSave, fields }) {
           {fields.map((f) => {
             if (f.kind === "photo") {
               return (
-                <label key={f.key} className="cms-field cms-field--photo">
+                <div key={f.key} className="cms-field cms-field--photo">
                   <span>{f.label}</span>
                   <div className="cms-photo-input">
                     <div className="cms-photo-input__preview" style={get(f.key) ? { backgroundImage: `url(${get(f.key)})` } : undefined}>
@@ -4248,7 +4248,7 @@ function CrudModal({ title, draft, onClose, onSave, fields }) {
                       <input type="text" placeholder="또는 이미지 URL" value={typeof get(f.key) === "string" && !get(f.key)?.startsWith("data:") ? get(f.key) : ""} onChange={(e) => update(f.key, e.target.value)} />
                     </div>
                   </div>
-                </label>
+                </div>
               );
             }
             if (f.kind === "select") {
