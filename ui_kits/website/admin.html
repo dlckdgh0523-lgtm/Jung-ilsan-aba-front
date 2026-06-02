@@ -3576,7 +3576,12 @@ function DirectorAdminView({ profile }) {
         <h3>센터장 프로필</h3>
         <button className="btn btn-primary btn-sm" onClick={() => {
           if (!window.ABA_API) { setSaved(true); return; }
-          window.ABA_API.put("/director", d).then(() => setSaved(true)).catch((e) => alert((e && e.message) || "저장에 실패했습니다."));
+          // Save-time guard: drop any malformed/empty career & paper entries so the record can never be re-corrupted.
+          const payload = { ...d,
+            career: (Array.isArray(d.career) ? d.career : []).filter((c) => c && typeof c === "object" && !Array.isArray(c) && String(c.text || "").trim()).map((c) => ({ period: c.period === "전" ? "전" : "현", text: c.text })),
+            papers: (Array.isArray(d.papers) ? d.papers : []).filter((p) => p && typeof p === "object" && !Array.isArray(p) && (p.title || p.year)),
+          };
+          window.ABA_API.put("/director", payload).then(() => setSaved(true)).catch((e) => alert((e && e.message) || "저장에 실패했습니다."));
         }}>
           <i data-lucide="save" style={{width:14,height:14}}/> 저장
         </button>
