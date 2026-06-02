@@ -3,4 +3,4 @@
  *   예) window.ABA_API_BASE = "https://api.도메인.com";   또는   "http://<EC2-공인IP>";
  * 프론트와 API가 같은 도메인이면 ""(빈 문자열) 그대로 두세요.
  */
-window.ABA_API_BASE = "";
+window.ABA_API_BASE = "https://api.chungaba.com";
