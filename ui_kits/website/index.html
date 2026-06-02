@@ -2321,6 +2321,49 @@ window.SITE_DATA = {
 <script type="text/babel" data-presets="react">/* global React */
 const { useState, useEffect } = React;
 
+/* ─── Lucide icons — React-safe renderer (shared on window) ──────
+   Lucide's createIcons() REPLACES each <i data-lucide> with a fresh
+   <svg>, desyncing React's virtual DOM → "removeChild" crash when an
+   icon is unmounted (e.g. hash-route navigation). Fix: inject the SVG
+   *inside* the <i> so React keeps owning the node. Per-icon size and
+   stroke-width are read from the element's own style (design intact). */
+function __lucideNode(name) {
+  const L = window.lucide;
+  if (!L || !name) return null;
+  const pascal = String(name).split(/[-_ ]+/).filter(Boolean)
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join("");
+  return (L.icons && (L.icons[pascal] || L.icons[name])) || L[pascal] || null;
+}
+function __lucideSvg(name, size, sw, node) {
+  if (!Array.isArray(node)) return null;
+  let kids = "";
+  for (const child of node) {
+    if (!Array.isArray(child)) continue;
+    const attrs = child[1] || {};
+    let a = "";
+    for (const k in attrs) if (Object.prototype.hasOwnProperty.call(attrs, k)) a += " " + k + '="' + attrs[k] + '"';
+    kids += "<" + child[0] + a + "></" + child[0] + ">";
+  }
+  const s = size || 24;
+  return '<svg xmlns="http://www.w3.org/2000/svg" width="' + s + '" height="' + s +
+    '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="' + (sw || 2) + '" ' +
+    'stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-' + name + '">' + kids + "</svg>";
+}
+window.renderLucideIcons = function renderLucideIcons() {
+  if (!window.lucide) return;
+  const list = document.querySelectorAll("i[data-lucide]");
+  for (let i = 0; i < list.length; i++) {
+    const el = list[i];
+    const name = el.getAttribute("data-lucide");
+    const size = parseInt(el.style.width, 10) || parseInt(el.style.height, 10) || 24;
+    const sw = el.style.strokeWidth || 2;
+    const key = name + ":" + size + ":" + sw;
+    if (el.getAttribute("data-lcr") === key) continue;
+    const svg = __lucideSvg(name, size, sw, __lucideNode(name));
+    if (svg) { el.innerHTML = svg; el.setAttribute("data-lcr", key); }
+  }
+};
+
 /* ─────────────────────────────────────────────────────────────
    Icon — wraps Lucide.
    ───────────────────────────────────────────────────────────── */
@@ -2329,7 +2372,7 @@ function Icon({ name, size = 20, strokeWidth = 1.75, className = "" }) {
   useEffect(() => {
     if (window.lucide && ref.current) {
       ref.current.setAttribute("data-lucide", name);
-      window.lucide.createIcons({ icons: undefined, attrs: { "stroke-width": strokeWidth } });
+      window.renderLucideIcons();
     }
   }, [name, strokeWidth]);
   return (
@@ -2575,7 +2618,7 @@ function PopupHost({ popups }) {
   useEffect(() => {
     setList((popups || []).filter(popupIsShowable));
   }, [popups]);
-  useEffect(() => { if (window.lucide) window.lucide.createIcons(); }, [list]);
+  useEffect(() => { if (window.lucide) window.renderLucideIcons(); }, [list]);
 
   const close = (id) => setList((a) => a.filter((p) => p.id !== id));
   const hideToday = (id) => {
@@ -3051,7 +3094,7 @@ function TherapistsSection({ therapists, asPage }) {
 }
 
 function TherapistDetail({ therapist, onBack }) {
-  React.useEffect(() => { if (window.lucide) window.lucide.createIcons(); });
+  React.useEffect(() => { if (window.lucide) window.renderLucideIcons(); });
   return (
     <article className="therapist-detail">
       <div className="container">
@@ -3394,7 +3437,7 @@ window.PrivacyConsentPage = PrivacyConsentPage;
 
 function ProgramDetail({ program, onBack }) {
   const tone = (window.PROGRAM_TONES && window.PROGRAM_TONES[program.tone]) || { from: "#F8AD46", to: "#FFC857" };
-  React.useEffect(() => { if (window.lucide) window.lucide.createIcons(); });
+  React.useEffect(() => { if (window.lucide) window.renderLucideIcons(); });
   return (
     <article className="program-detail">
       <div className="program-detail__hero" style={{ background: `linear-gradient(135deg, ${tone.from} 0%, ${tone.to} 100%)` }}>
@@ -3440,7 +3483,7 @@ function ProgramDetail({ program, onBack }) {
 }
 
 function NoticeDetail({ notice, onBack }) {
-  React.useEffect(() => { if (window.lucide) window.lucide.createIcons(); });
+  React.useEffect(() => { if (window.lucide) window.renderLucideIcons(); });
   return (
     <article className="notice-detail">
       <div className="container">
@@ -3517,7 +3560,7 @@ function App() {
   }, []);
 
   useEffectApp(() => {
-    if (window.lucide) window.lucide.createIcons();
+    if (window.lucide) window.renderLucideIcons();
   });
 
   const openAdmin = () => {

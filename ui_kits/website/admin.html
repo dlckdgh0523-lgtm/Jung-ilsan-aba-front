@@ -2955,6 +2955,49 @@ window.SITE_DATA = {
 <script type="text/babel" data-presets="react">/* global React */
 const { useState: useStateAdmin, useEffect: useEffectAdmin } = React;
 
+/* ─── Lucide icons — React-safe renderer ────────────────────────
+   Lucide's createIcons() REPLACES each <i data-lucide> node with a
+   fresh <svg>, which desyncs React's virtual DOM and triggers a
+   "Failed to execute 'removeChild'" crash when a conditionally-
+   rendered icon (e.g. the photo placeholder) is later unmounted.
+   Fix: inject the SVG *inside* the <i> so React keeps owning the
+   node. Call renderLucideIcons() instead of lucide.createIcons().  */
+function __lucideNode(name) {
+  const L = window.lucide;
+  if (!L || !name) return null;
+  const pascal = String(name).split(/[-_ ]+/).filter(Boolean)
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join("");
+  return (L.icons && (L.icons[pascal] || L.icons[name])) || L[pascal] || null;
+}
+function __lucideSvg(name, size, node) {
+  if (!Array.isArray(node)) return null;
+  let kids = "";
+  for (const child of node) {
+    if (!Array.isArray(child)) continue;
+    const attrs = child[1] || {};
+    let a = "";
+    for (const k in attrs) if (Object.prototype.hasOwnProperty.call(attrs, k)) a += " " + k + '="' + attrs[k] + '"';
+    kids += "<" + child[0] + a + "></" + child[0] + ">";
+  }
+  const s = size || 24;
+  return '<svg xmlns="http://www.w3.org/2000/svg" width="' + s + '" height="' + s +
+    '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" ' +
+    'stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-' + name + '">' + kids + "</svg>";
+}
+function renderLucideIcons() {
+  if (!window.lucide) return;
+  const list = document.querySelectorAll("i[data-lucide]");
+  for (let i = 0; i < list.length; i++) {
+    const el = list[i];
+    const name = el.getAttribute("data-lucide");
+    const size = parseInt(el.style.width, 10) || parseInt(el.style.height, 10) || 24;
+    const key = name + ":" + size;
+    if (el.getAttribute("data-lcr") === key) continue;
+    const svg = __lucideSvg(name, size, __lucideNode(name));
+    if (svg) { el.innerHTML = svg; el.setAttribute("data-lcr", key); }
+  }
+}
+
 /* ─────────────────────────────────────────────────────────────
    Admin CMS — operational dashboard + CRUD
    * Real-time visitor stats (simulated; would be SSE in production)
@@ -3000,7 +3043,7 @@ function Login({ onSuccess }) {
   const [pw, setPw]   = useStateAdmin("");
   const [err, setErr] = useStateAdmin("");
   const [show, setShow] = useStateAdmin(false);
-  useEffectAdmin(() => { if (window.lucide) window.lucide.createIcons(); });
+  useEffectAdmin(() => { if (window.lucide) renderLucideIcons(); });
   const submit = (e) => {
     e.preventDefault();
     if (!window.ABA_API) { setErr("API 연결을 사용할 수 없습니다."); return; }
@@ -3042,7 +3085,7 @@ function AdminApp({ onLogout }) {
   /* Consultations + notification badge */
   const { consultations, unread, markAllRead, markRead, removeOne, toast } = useConsultations();
 
-  useEffectAdmin(() => { if (window.lucide) window.lucide.createIcons(); });
+  useEffectAdmin(() => { if (window.lucide) renderLucideIcons(); });
 
   return (
     <div className="cms">
@@ -3188,7 +3231,7 @@ function DashboardView({ data, consultations, setView }) {
   const todayVisits = (summary.today && summary.today.visitors) || 0;
   const totalVisits = (summary.total && summary.total.visitors) || 0;
 
-  useEffectAdmin(() => { if (window.lucide) window.lucide.createIcons(); }, [online, todayVisits, totalVisits]);
+  useEffectAdmin(() => { if (window.lucide) renderLucideIcons(); }, [online, todayVisits, totalVisits]);
 
   const newReqs = consultations.filter(c => !c.read).length;
   const recent  = consultations.slice(0, 5);
@@ -3256,7 +3299,7 @@ function DashboardView({ data, consultations, setView }) {
 
 /* ─── CONSULTATIONS LIST ──────────────────────────────────── */
 function ConsultationsView({ items, onRead, onRemove }) {
-  useEffectAdmin(() => { if (window.lucide) window.lucide.createIcons(); }, [items]);
+  useEffectAdmin(() => { if (window.lucide) renderLucideIcons(); }, [items]);
   const seed = () => {
     const sample = { id: "c-" + Date.now(), ts: Date.now(), parent: "테스트 부모님", phone: "010-1234-5678", age: "만 4세", topic: "조기교실", note: "샘플 데이터입니다.", read: false };
     const list = JSON.parse(localStorage.getItem("aba-consultations") || "[]");
@@ -3398,7 +3441,7 @@ function RowActions({ visible, onEdit, onDelete, onUp, onDown, onToggle }) {
 function HeroAdminView({ slides }) {
   const { items, create, update, remove, toggleVisible, move } = useEditableList(slides, { idPrefix: "hero", resource: "hero" });
   const [editing, setEditing] = useStateAdmin(null);
-  useEffectAdmin(() => { if (window.lucide) window.lucide.createIcons(); });
+  useEffectAdmin(() => { if (window.lucide) renderLucideIcons(); });
   return (
     <section className="cms__card">
       <header>
@@ -3455,7 +3498,7 @@ function HeroAdminView({ slides }) {
 function AboutAdminView({ about, brand }) {
   const [draft, setDraft] = useStateAdmin({ ...about, ...brand });
   const [saved, setSaved] = useStateAdmin(false);
-  useEffectAdmin(() => { if (window.lucide) window.lucide.createIcons(); });
+  useEffectAdmin(() => { if (window.lucide) renderLucideIcons(); });
   const update = (k, v) => { setDraft(d => ({ ...d, [k]: v })); setSaved(false); };
   return (
     <section className="cms__card">
@@ -3501,7 +3544,7 @@ function FieldText({ label, value, onChange, kind = "text", placeholder }) {
 function DirectorAdminView({ profile }) {
   const [d, setD] = useStateAdmin({ ...profile });
   const [saved, setSaved] = useStateAdmin(false);
-  useEffectAdmin(() => { if (window.lucide) window.lucide.createIcons(); });
+  useEffectAdmin(() => { if (window.lucide) renderLucideIcons(); });
   const update = (k, v) => { setD(o => ({ ...o, [k]: v })); setSaved(false); };
   const onPhotoFile = (file) => readImageFile(file, (data) => update("photo", data));
 
@@ -3603,7 +3646,7 @@ function DirectorAdminView({ profile }) {
 function ProgramsAdminView({ programs }) {
   const { items, create, update, remove, toggleVisible, move } = useEditableList(programs, { idPrefix: "p", resource: "programs" });
   const [editing, setEditing] = useStateAdmin(null);
-  useEffectAdmin(() => { if (window.lucide) window.lucide.createIcons(); });
+  useEffectAdmin(() => { if (window.lucide) renderLucideIcons(); });
   return (
     <section className="cms__card">
       <header>
@@ -3671,7 +3714,7 @@ function ProgramsAdminView({ programs }) {
 function TherapistsAdminView({ therapists }) {
   const { items, create, update, remove, toggleVisible, move } = useEditableList(therapists, { idPrefix: "t", resource: "therapists" });
   const [editing, setEditing] = useStateAdmin(null);
-  useEffectAdmin(() => { if (window.lucide) window.lucide.createIcons(); });
+  useEffectAdmin(() => { if (window.lucide) renderLucideIcons(); });
   return (
     <section className="cms__card">
       <header>
@@ -3732,7 +3775,7 @@ function TherapistsAdminView({ therapists }) {
 function NoticesAdminView({ notices }) {
   const { items, create, update, remove, toggleVisible, move } = useEditableList(notices, { idPrefix: "n", resource: "notices" });
   const [editing, setEditing] = useStateAdmin(null);
-  useEffectAdmin(() => { if (window.lucide) window.lucide.createIcons(); });
+  useEffectAdmin(() => { if (window.lucide) renderLucideIcons(); });
   return (
     <section className="cms__card">
       <header>
@@ -3787,7 +3830,7 @@ function NoticesAdminView({ notices }) {
 function GalleryAdminView({ gallery }) {
   const { items, create, update, remove, toggleVisible, move } = useEditableList(gallery, { idPrefix: "g", resource: "gallery" });
   const [editing, setEditing] = useStateAdmin(null);
-  useEffectAdmin(() => { if (window.lucide) window.lucide.createIcons(); });
+  useEffectAdmin(() => { if (window.lucide) renderLucideIcons(); });
   const onBulk = (files) => {
     Array.from(files || []).forEach((f) => readImageFile(f, (dataUrl) => {
       create({ src: dataUrl, title: f.name.replace(/\.[a-z]+$/i, ""), span: 1 });
@@ -3851,7 +3894,7 @@ function popupStatus(p) {
 function PopupAdminView({ popups }) {
   const { items, create, update } = useEditableList(popups, { idPrefix: "pop", resource: "popups" });
   const [editing, setEditing] = useStateAdmin(null);
-  useEffectAdmin(() => { if (window.lucide) window.lucide.createIcons(); });
+  useEffectAdmin(() => { if (window.lucide) renderLucideIcons(); });
 
   const today = new Date().toISOString().slice(0, 10);
   const live = items.filter(p => !p.deletedAt);
@@ -3940,7 +3983,7 @@ function MenuAdminView({ nav }) {
   const [deleteTarget, setDeleteTarget] = useStateAdmin(null);
   const [confirmText, setConfirmText] = useStateAdmin("");
 
-  useEffectAdmin(() => { if (window.lucide) window.lucide.createIcons(); }, [items, deleteTarget]);
+  useEffectAdmin(() => { if (window.lucide) renderLucideIcons(); }, [items, deleteTarget]);
 
   // Admin loads the full nav (incl. hidden) from the API.
   useEffectAdmin(() => {
@@ -4095,7 +4138,7 @@ function SectionsAdminView() {
   const [saved, setSaved] = useStateAdmin(false);
   useEffectAdmin(() => {
     if (window.ABA_API) window.ABA_API.get("/site", { noAuth: true }).then(s => { if (s && s.sections) setSections(s.sections); }).catch(() => {});
-    if (window.lucide) window.lucide.createIcons();
+    if (window.lucide) renderLucideIcons();
   }, []);
   const isOn = (id) => sections[id] !== false;
   const toggle = (id) => {
@@ -4127,7 +4170,7 @@ function SectionsAdminView() {
 /* ─── CRUD MODAL ───────────────────────────────────────────── */
 function CrudModal({ title, draft, onClose, onSave, fields }) {
   const [d, setD] = useStateAdmin({ ...draft, tags: draft.tags ? [...draft.tags] : [] });
-  useEffectAdmin(() => { if (window.lucide) window.lucide.createIcons(); });
+  useEffectAdmin(() => { if (window.lucide) renderLucideIcons(); });
   // Dot-notation get/set so fields can address nested keys like "detail.intro".
   const get = (k) => k.split(".").reduce((o, part) => (o == null ? undefined : o[part]), d);
   const setNested = (obj, path, value) => {
