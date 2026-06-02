@@ -3621,9 +3621,24 @@ function DirectorAdminView({ profile }) {
         </div>
 
         <div className="cms-field">
-          <span>경력 (한 줄에 하나, "현|텍스트" 또는 "전|텍스트")</span>
-          <textarea rows="6" value={(d.career || []).map(c => (c.period || "현") + "|" + (c.text || "")).join("\n")}
-            onChange={(e)=>update("career", e.target.value.split("\n").map(line => { const [p, ...rest] = line.split("|"); return { period: (p || "현").trim(), text: rest.join("|").trim() }; }))}/>
+          <span>경력</span>
+          <div className="cms-sections">
+            {(d.career || []).map((c, idx) => (
+              <div key={idx} className="cms-section-row">
+                <div className="cms-section-row__head">
+                  <div style={{display:"flex",gap:"4px",flexShrink:0}}>
+                    <button type="button" className={"btn btn-sm " + (c.period === "전" ? "btn-ghost" : "btn-primary")} onClick={()=>update("career",(d.career||[]).map((it,i)=>i===idx?{...it,period:"현"}:it))}>현</button>
+                    <button type="button" className={"btn btn-sm " + (c.period === "전" ? "btn-primary" : "btn-ghost")} onClick={()=>update("career",(d.career||[]).map((it,i)=>i===idx?{...it,period:"전"}:it))}>전</button>
+                  </div>
+                  <input type="text" value={c.text || ""} placeholder="경력 내용" onChange={(e)=>update("career",(d.career||[]).map((it,i)=>i===idx?{...it,text:e.target.value}:it))}/>
+                  <button type="button" className="icon-btn" onClick={()=>update("career",(d.career||[]).filter((_,i)=>i!==idx))}><i data-lucide="trash-2" style={{width:14,height:14}}/></button>
+                </div>
+              </div>
+            ))}
+            <button type="button" className="btn btn-ghost btn-sm" onClick={()=>update("career",[...(d.career||[]),{period:"현",text:""}])}>
+              <i data-lucide="plus" style={{width:14,height:14}}/> 경력 추가
+            </button>
+          </div>
         </div>
 
         <div className="cms-field">
@@ -3761,7 +3776,7 @@ function TherapistsAdminView({ therapists }) {
             { key: "role", label: "역할" },
             { key: "summary", label: "한 줄 소개", kind: "textarea" },
             { key: "education", label: "학력 (한 줄에 하나)", kind: "list" },
-            { key: "career", label: "경력 (한 줄에 하나, '현|텍스트' 또는 '전|텍스트' 형식)", kind: "career" },
+            { key: "career", label: "경력", kind: "career" },
             { key: "certifications", label: "자격증 (한 줄에 하나)", kind: "list" },
             { key: "completion", label: "이수 과정" },
           ]}
@@ -4326,10 +4341,27 @@ function CrudModal({ title, draft, onClose, onSave, fields }) {
               );
             }
             if (f.kind === "career") {
+              const careerArr = get(f.key) || [];
               return (
                 <label key={f.key} className="cms-field">
                   <span>{f.label}</span>
-                  <textarea rows="6" value={(get(f.key) || []).map(c => (c.period || "현") + "|" + (c.text || "")).join("\n")} onChange={(e) => update(f.key, e.target.value.split("\n").map(line => { const [p, ...rest] = line.split("|"); return { period: (p || "현").trim(), text: rest.join("|").trim() }; }))}/>
+                  <div className="cms-sections">
+                    {careerArr.map((c, idx) => (
+                      <div key={idx} className="cms-section-row">
+                        <div className="cms-section-row__head">
+                          <div style={{display:"flex",gap:"4px",flexShrink:0}}>
+                            <button type="button" className={"btn btn-sm " + (c.period === "전" ? "btn-ghost" : "btn-primary")} onClick={() => update(f.key, careerArr.map((it,i)=>i===idx?{...it,period:"현"}:it))}>현</button>
+                            <button type="button" className={"btn btn-sm " + (c.period === "전" ? "btn-primary" : "btn-ghost")} onClick={() => update(f.key, careerArr.map((it,i)=>i===idx?{...it,period:"전"}:it))}>전</button>
+                          </div>
+                          <input type="text" value={c.text || ""} placeholder="경력 내용" onChange={(e) => update(f.key, careerArr.map((it,i)=>i===idx?{...it,text:e.target.value}:it))}/>
+                          <button type="button" className="icon-btn" onClick={() => update(f.key, careerArr.filter((_,i)=>i!==idx))}><i data-lucide="trash-2" style={{width:14,height:14}}/></button>
+                        </div>
+                      </div>
+                    ))}
+                    <button type="button" className="btn btn-ghost btn-sm" onClick={() => update(f.key, [...careerArr, {period:"현", text:""}])}>
+                      <i data-lucide="plus" style={{width:14,height:14}}/> 경력 추가
+                    </button>
+                  </div>
                 </label>
               );
             }
