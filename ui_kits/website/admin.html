@@ -3032,6 +3032,10 @@ function AdminGate() {
     if (window.ABA_API && window.ABA_API.isAuthed()) {
       window.ABA_API.me().then(() => setAuthed(true)).catch(() => { window.ABA_API.setToken(""); setAuthed(false); });
     }
+    // Any 401 during use (expired/revoked token) → drop the session and go back to login.
+    const onUnauth = () => setAuthed(false);
+    window.addEventListener("aba-unauthorized", onUnauth);
+    return () => window.removeEventListener("aba-unauthorized", onUnauth);
   }, []);
   if (!authed) return <Login onSuccess={() => setAuthed(true)} />;
   return <AdminApp onLogout={() => { if (window.ABA_API) window.ABA_API.logout(); setAuthed(false); }} />;
@@ -3086,6 +3090,17 @@ function AdminApp({ onLogout }) {
   const { consultations, unread, markAllRead, markRead, removeOne, toast } = useConsultations();
 
   useEffectAdmin(() => { if (window.lucide) renderLucideIcons(); });
+
+  /* Auto-logout after 30 minutes of inactivity (shared-PC safety). */
+  useEffectAdmin(() => {
+    let timer;
+    const IDLE_MS = 30 * 60 * 1000;
+    const reset = () => { clearTimeout(timer); timer = setTimeout(onLogout, IDLE_MS); };
+    const evts = ["mousemove", "keydown", "click", "scroll", "touchstart"];
+    evts.forEach((e) => window.addEventListener(e, reset, { passive: true }));
+    reset();
+    return () => { clearTimeout(timer); evts.forEach((e) => window.removeEventListener(e, reset)); };
+  }, []);
 
   return (
     <div className="cms">

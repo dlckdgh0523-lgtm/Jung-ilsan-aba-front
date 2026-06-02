@@ -16,8 +16,9 @@
   var PREFIX = '/v1';
   var TOKEN_KEY = 'aba-token';
 
-  function token() { try { return localStorage.getItem(TOKEN_KEY) || ''; } catch (e) { return ''; } }
-  function setToken(t) { try { t ? localStorage.setItem(TOKEN_KEY, t) : localStorage.removeItem(TOKEN_KEY); } catch (e) {} }
+  // Admin token in sessionStorage → cleared when the browser/tab closes (shared-PC safety).
+  function token() { try { return sessionStorage.getItem(TOKEN_KEY) || ''; } catch (e) { return ''; } }
+  function setToken(t) { try { t ? sessionStorage.setItem(TOKEN_KEY, t) : sessionStorage.removeItem(TOKEN_KEY); } catch (e) {} }
   function uuid() {
     if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
     return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
@@ -44,6 +45,11 @@
     var data = null;
     if (text) { try { data = JSON.parse(text); } catch (e) { data = text; } }
     if (!res.ok) {
+      // Expired / revoked token on an authed request → drop it and tell the app to show login.
+      if (res.status === 401 && !opts.noAuth) {
+        setToken('');
+        try { window.dispatchEvent(new Event('aba-unauthorized')); } catch (e) {}
+      }
       var err = new Error((data && data.error && data.error.message) || res.statusText || ('HTTP ' + res.status));
       err.status = res.status;
       err.code = data && data.error && data.error.code;
