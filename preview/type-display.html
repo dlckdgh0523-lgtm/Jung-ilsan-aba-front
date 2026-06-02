@@ -1,0 +1,245 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><title>Type · Display</title>
+<style>
+/*  정지은 일산 ABA — Colors & Type
+    -----------------------------------------------------------
+    Sampled directly from the brand mark (logo-aba.png).
+    Pretendard is loaded via CDN — see README for substitution notes.
+*/
+
+/* Pretendard — Korean + Latin variable font (premium Apple-like) */
+@import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css");
+
+:root {
+  /* ─── BRAND CORE ───────────────────────────────────────── */
+  --brand-orange:        #F8AD46;   /* sunrise — left of "aba" */
+  --brand-orange-deep:   #EC8A1F;   /* hover / pressed */
+  --brand-orange-soft:   #FCD79A;   /* tinted bg */
+  --brand-green:         #7DBE32;   /* leaf — right of "aba" */
+  --brand-green-deep:    #5BA31E;   /* hover / pressed */
+  --brand-green-soft:    #C8E5A0;   /* tinted bg */
+  --brand-yellow:        #FFC857;   /* transition mid in gradient */
+
+  /* Signature gradient (orange → green; matches the logo wordmark) */
+  --brand-gradient:      linear-gradient(95deg, #F8AD46 0%, #FFC857 40%, #7DBE32 100%);
+  --brand-gradient-soft: linear-gradient(95deg, #FCD79A 0%, #FFEDC4 40%, #C8E5A0 100%);
+
+  /* ─── NEUTRALS (warm, drawn from interior wood + walls) ── */
+  --bg-base:        #FBF8F3;   /* warm off-white — page bg */
+  --bg-surface:     #FFFFFF;   /* card / sheet */
+  --bg-muted:       #F4EFE6;   /* soft hover / tint */
+  --bg-elevated:    #FFFFFF;   /* modal */
+  --bg-ink:         #1C1A17;   /* dark mode / hero overlay */
+
+  --wood-1:         #E8D7B8;   /* light wood (doors)  */
+  --wood-2:         #C8A878;   /* mid wood (shelf)    */
+  --wood-3:         #8C6A3F;   /* deep wood (floor)   */
+
+  /* ─── FOREGROUND (text) ─────────────────────────────────── */
+  --fg-1:           #1C1A17;   /* primary text */
+  --fg-2:           #4A4640;   /* secondary  */
+  --fg-3:           #807B72;   /* tertiary / meta */
+  --fg-4:           #B5AFA3;   /* placeholder */
+  --fg-on-brand:    #FFFFFF;   /* text on brand color */
+  --fg-inverse:     #FBF8F3;   /* text on dark */
+
+  /* ─── BORDERS / DIVIDERS ────────────────────────────────── */
+  --border-1:       #EEE7DA;   /* default hairline */
+  --border-2:       #DCD2BF;   /* stronger */
+  --border-focus:   #F8AD46;   /* focus ring */
+
+  /* ─── SEMANTIC ──────────────────────────────────────────── */
+  --info:           #4A90E2;
+  --success:        #5BA31E;   /* uses brand green */
+  --warning:        #EC8A1F;   /* uses brand orange */
+  --danger:         #D64545;
+  --kakao:          #FEE500;   /* KakaoTalk yellow */
+  --kakao-fg:       #181600;
+
+  /* ─── TYPE ──────────────────────────────────────────────── */
+  --font-sans: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont,
+               "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", system-ui, sans-serif;
+  --font-display: "Pretendard Variable", Pretendard, -apple-system, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", "SF Mono", ui-monospace, Menlo, monospace;
+
+  /* Type scale — generous, Apple-like */
+  --fs-display-1:   clamp(48px, 7vw, 88px);    /* hero */
+  --fs-display-2:   clamp(36px, 5vw, 64px);    /* section opener */
+  --fs-h1:          clamp(32px, 4vw, 48px);
+  --fs-h2:          clamp(24px, 3vw, 36px);
+  --fs-h3:          20px;
+  --fs-h4:          18px;
+  --fs-body-lg:     18px;
+  --fs-body:        16px;
+  --fs-body-sm:     14px;
+  --fs-caption:     13px;
+  --fs-micro:       11px;
+
+  --lh-tight:       1.1;
+  --lh-snug:        1.25;
+  --lh-normal:      1.55;
+  --lh-relaxed:     1.7;
+
+  --tracking-tight: -0.025em;   /* display */
+  --tracking-snug:  -0.015em;   /* headlines */
+  --tracking-wide:   0.08em;    /* eyebrow / kicker */
+
+  /* ─── SPACING — 4pt base ────────────────────────────────── */
+  --space-1:  4px;
+  --space-2:  8px;
+  --space-3:  12px;
+  --space-4:  16px;
+  --space-5:  20px;
+  --space-6:  24px;
+  --space-8:  32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --space-20: 80px;
+  --space-24: 96px;
+  --space-32: 128px;
+
+  /* ─── RADII ─────────────────────────────────────────────── */
+  --radius-xs:  4px;
+  --radius-sm:  8px;
+  --radius-md:  12px;   /* default cards / inputs */
+  --radius-lg:  20px;   /* feature cards */
+  --radius-xl:  28px;   /* hero / large surfaces */
+  --radius-2xl: 40px;
+  --radius-pill: 999px;
+
+  /* ─── SHADOWS — soft, warm, never harsh ─────────────────── */
+  --shadow-xs:  0 1px 2px  rgba(28, 26, 23, 0.04);
+  --shadow-sm:  0 2px 6px  rgba(28, 26, 23, 0.06),
+                0 1px 2px  rgba(28, 26, 23, 0.04);
+  --shadow-md:  0 6px 20px rgba(28, 26, 23, 0.07),
+                0 2px 6px  rgba(28, 26, 23, 0.04);
+  --shadow-lg:  0 20px 40px rgba(28, 26, 23, 0.09),
+                0 8px 16px  rgba(28, 26, 23, 0.05);
+  --shadow-glow-orange: 0 12px 32px rgba(248, 173, 70, 0.25);
+  --shadow-glow-green:  0 12px 32px rgba(125, 190, 50, 0.25);
+
+  /* ─── MOTION ────────────────────────────────────────────── */
+  --ease-out-soft:   cubic-bezier(0.22, 1, 0.36, 1);   /* primary */
+  --ease-in-out:     cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-spring:     cubic-bezier(0.34, 1.56, 0.64, 1); /* light bounce */
+  --dur-fast:        160ms;
+  --dur-base:        280ms;
+  --dur-slow:        480ms;
+  --dur-hero:        900ms;   /* hero slide */
+
+  /* ─── LAYOUT ────────────────────────────────────────────── */
+  --container-max:  1280px;
+  --container-wide: 1440px;
+  --gutter:         clamp(20px, 4vw, 48px);
+  --header-h:       72px;
+}
+
+/* ────────────────────────────────────────────────────────────
+   SEMANTIC ELEMENT STYLES
+   Default everything to the brand. Components inherit these.
+   ──────────────────────────────────────────────────────────── */
+
+html, body {
+  font-family: var(--font-sans);
+  color: var(--fg-1);
+  background: var(--bg-base);
+  font-feature-settings: "ss01", "ss02", "tnum";
+  font-variant-numeric: tabular-nums;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+.display-1 {
+  font-family: var(--font-display);
+  font-size: var(--fs-display-1);
+  font-weight: 700;
+  line-height: var(--lh-tight);
+  letter-spacing: var(--tracking-tight);
+}
+.display-2 {
+  font-family: var(--font-display);
+  font-size: var(--fs-display-2);
+  font-weight: 700;
+  line-height: var(--lh-tight);
+  letter-spacing: var(--tracking-tight);
+}
+h1, .h1 {
+  font-size: var(--fs-h1); font-weight: 700;
+  line-height: var(--lh-snug); letter-spacing: var(--tracking-snug);
+}
+h2, .h2 {
+  font-size: var(--fs-h2); font-weight: 700;
+  line-height: var(--lh-snug); letter-spacing: var(--tracking-snug);
+}
+h3, .h3 { font-size: var(--fs-h3); font-weight: 600; line-height: var(--lh-snug); }
+h4, .h4 { font-size: var(--fs-h4); font-weight: 600; line-height: var(--lh-snug); }
+
+p, .body { font-size: var(--fs-body); line-height: var(--lh-relaxed); color: var(--fg-2); }
+.body-lg  { font-size: var(--fs-body-lg); line-height: var(--lh-relaxed); }
+.body-sm  { font-size: var(--fs-body-sm); line-height: var(--lh-normal); }
+.caption  { font-size: var(--fs-caption); line-height: var(--lh-normal); color: var(--fg-3); }
+
+.eyebrow {
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  color: var(--brand-green-deep);
+}
+
+.text-gradient {
+  background: var(--brand-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Preview card base — shared by all cards in /preview/.
+   Designed for a 700-wide viewport in the Design System tab. */
+
+
+* { box-sizing: border-box; }
+html, body {
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  color: var(--fg-1);
+  font-family: var(--font-sans);
+}
+.card {
+  width: 700px;
+  padding: 24px 28px;
+  background: var(--bg-surface);
+  display: block;
+  position: relative;
+  overflow: hidden;
+}
+.row { display: flex; align-items: center; gap: 16px; }
+.col { display: flex; flex-direction: column; gap: 4px; }
+.label-xs {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--fg-3);
+}
+.token { font-family: var(--font-mono); font-size: 11.5px; color: var(--fg-2); }
+.muted { color: var(--fg-3); }
+
+</style>
+<style>
+  .stack { display: grid; gap: 14px; }
+  .row { display: grid; grid-template-columns: 1fr auto; align-items: baseline; gap: 12px; }
+  .tok { font-family: var(--font-mono); font-size: 11px; color: var(--fg-3); white-space: nowrap; }
+  .d1 { font-size: 56px; font-weight: 700; line-height: 1.05; letter-spacing: -0.025em; color: var(--fg-1); }
+  .d2 { font-size: 40px; font-weight: 700; line-height: 1.1; letter-spacing: -0.025em; color: var(--fg-1); }
+</style></head><body>
+<div class="card">
+  <div class="stack">
+    <div class="row"><div class="d1">한 아이의 속도로</div><div class="tok">display-1 · 700 · 56–88px / -0.025em</div></div>
+    <div class="row"><div class="d2">작은 변화부터 시작합니다</div><div class="tok">display-2 · 700 · 36–64px / -0.025em</div></div>
+  </div>
+</div>
+</body></html>

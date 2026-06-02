@@ -1,0 +1,136 @@
+/* Site-scoped layout helpers for the 정지은 ABA marketing site. */
+
+.section { padding: clamp(64px, 10vw, 128px) 0; }
+.section-tight { padding: clamp(48px, 7vw, 96px) 0; }
+.container {
+  width: 100%;
+  max-width: var(--container-max);
+  margin: 0 auto;
+  padding-left: var(--gutter);
+  padding-right: var(--gutter);
+  box-sizing: border-box;
+}
+.container-wide { max-width: var(--container-wide); }
+
+.alt-bg { background: var(--bg-base); }
+.surface-bg { background: var(--bg-surface); }
+.ink-bg { background: var(--bg-ink); color: var(--fg-inverse); }
+.soft-bg { background: var(--brand-gradient-soft); }
+
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 22px;
+  border-radius: var(--radius-md);
+  font-family: inherit;
+  font-weight: 600;
+  font-size: 15px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  text-decoration: none;
+  transition: transform var(--dur-fast) var(--ease-out-soft),
+              box-shadow var(--dur-base) var(--ease-out-soft),
+              background var(--dur-base) var(--ease-out-soft),
+              color var(--dur-base) var(--ease-out-soft);
+  will-change: transform;
+}
+.btn:active { transform: scale(0.98); }
+.btn-primary {
+  background: var(--brand-gradient);
+  color: var(--fg-on-brand);
+  box-shadow: var(--shadow-sm);
+}
+.btn-primary:hover { box-shadow: var(--shadow-md), var(--shadow-glow-orange); }
+.btn-secondary {
+  background: var(--bg-surface);
+  color: var(--fg-1);
+  border-color: var(--border-2);
+}
+.btn-secondary:hover { background: var(--bg-muted); }
+.btn-ghost { background: transparent; color: var(--fg-1); }
+.btn-ghost:hover { background: var(--bg-muted); }
+.btn-white {
+  background: var(--bg-surface);
+  color: var(--fg-1);
+  border-color: var(--border-2);
+}
+.btn-white:hover {
+  background: var(--bg-base);
+  border-color: var(--brand-orange);
+  color: var(--fg-1);
+}
+.btn-lg { padding: 16px 28px; font-size: 16px; border-radius: 14px; }
+.btn-sm { padding: 8px 14px; font-size: 13px; border-radius: 10px; }
+
+.btn-kakao {
+  background: var(--kakao);
+  color: var(--kakao-fg);
+  border-radius: var(--radius-pill);
+  font-weight: 700;
+  box-shadow: var(--shadow-sm);
+}
+.btn-kakao:hover { box-shadow: var(--shadow-md); }
+
+/* Cards */
+.card-surface {
+  background: var(--bg-surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+  transition: transform var(--dur-base) var(--ease-out-soft),
+              box-shadow var(--dur-base) var(--ease-out-soft);
+}
+.card-hover:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-md);
+}
+.card-hover:hover .img-zoom { transform: scale(1.04); }
+
+.img-zoom { transition: transform 600ms var(--ease-out-soft); }
+
+/* Eyebrow */
+.eyebrow {
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  color: var(--brand-green-deep);
+  display: inline-block;
+  margin-bottom: 16px;
+}
+
+.text-gradient {
+  background: var(--brand-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Section header pattern */
+.section-head { max-width: 720px; margin-bottom: 56px; }
+.section-head h2 { margin: 0 0 16px; color: var(--fg-1); }
+.section-head p { margin: 0; font-size: 18px; color: var(--fg-2); line-height: 1.7; }
+
+/* Fade-in on view */
+.reveal {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity var(--dur-slow) var(--ease-out-soft),
+              transform var(--dur-slow) var(--ease-out-soft);
+}
+.reveal.in {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* utility */
+.row { display: flex; }
+.col { display: flex; flex-direction: column; }
+.gap-2 { gap: 8px; }
+.gap-3 { gap: 12px; }
+.gap-4 { gap: 16px; }
+.gap-6 { gap: 24px; }
+.gap-8 { gap: 32px; }
+.center { align-items: center; justify-content: center; }
