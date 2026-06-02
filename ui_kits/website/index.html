@@ -2882,9 +2882,9 @@ function DirectorProfile({ profile }) {
             <Reveal className="profile-card">
               <h3 className="profile-card__title"><Icon name="briefcase" size={18}/> 경력</h3>
               <ul className="profile-card__timeline">
-                {profile.career.map((c, i) => (
+                {(profile.career || []).filter((c) => c && c.text).map((c, i) => (
                   <li key={i}>
-                    <span className={"timeline__pin" + (c.period === "현" ? " is-current" : "")}>{c.period}</span>
+                    <span className={"timeline__pin" + (c.period === "현" ? " is-current" : "")}>{c.period || "현"}</span>
                     <span className="timeline__text">{c.text}</span>
                   </li>
                 ))}
@@ -2894,7 +2894,7 @@ function DirectorProfile({ profile }) {
             <Reveal className="profile-card" delay={60}>
               <h3 className="profile-card__title"><Icon name="file-text" size={18}/> 논문</h3>
               <ul className="profile-card__papers">
-                {profile.papers.map((p, i) => (
+                {(profile.papers || []).filter((p) => p && (p.title || p.year)).map((p, i) => (
                   <li key={i}>
                     <span className="paper__year">{p.year}</span>
                     <span className="paper__title">{p.title}</span>
@@ -3126,9 +3126,9 @@ function TherapistDetail({ therapist, onBack }) {
             <Reveal className="therapist-detail__block" delay={60}>
               <h3><Icon name="briefcase" size={18}/> 경력</h3>
               <ul className="therapist-detail__timeline">
-                {therapist.career.map((c, i) => (
+                {therapist.career.filter((c) => c && c.text).map((c, i) => (
                   <li key={i}>
-                    <span className={"timeline__pin" + (c.period === "현" ? " is-current" : "")}>{c.period}</span>
+                    <span className={"timeline__pin" + (c.period === "현" ? " is-current" : "")}>{c.period || "현"}</span>
                     <span>{c.text}</span>
                   </li>
                 ))}

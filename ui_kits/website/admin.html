@@ -3557,7 +3557,14 @@ function FieldText({ label, value, onChange, kind = "text", placeholder }) {
 
 /* ─── DIRECTOR (CENTER HEAD PROFILE) ──────────────────────── */
 function DirectorAdminView({ profile }) {
-  const [d, setD] = useStateAdmin({ ...profile });
+  const [d, setD] = useStateAdmin(() => {
+    const p = { ...profile };
+    // Coerce malformed career entries (legacy [] / non-objects) into clean {period,text}.
+    p.career = (Array.isArray(p.career) ? p.career : []).map((c) =>
+      c && typeof c === "object" && !Array.isArray(c) ? { period: c.period || "현", text: c.text || "" } : { period: "현", text: "" }
+    );
+    return p;
+  });
   const [saved, setSaved] = useStateAdmin(false);
   useEffectAdmin(() => { if (window.lucide) renderLucideIcons(); });
   const update = (k, v) => { setD(o => ({ ...o, [k]: v })); setSaved(false); };
@@ -4356,7 +4363,7 @@ function CrudModal({ title, draft, onClose, onSave, fields }) {
               );
             }
             if (f.kind === "career") {
-              const careerArr = get(f.key) || [];
+              const careerArr = (get(f.key) || []).map((c) => (c && typeof c === "object" && !Array.isArray(c) ? { period: c.period || "현", text: c.text || "" } : { period: "현", text: "" }));
               return (
                 <label key={f.key} className="cms-field">
                   <span>{f.label}</span>
