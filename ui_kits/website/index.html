@@ -1365,6 +1365,7 @@ p, .body { font-size: var(--fs-body); line-height: var(--lh-relaxed); color: var
 .form-grid label {
   display: flex; flex-direction: column; gap: 6px;
   font-size: 13px; color: var(--fg-2); font-weight: 500;
+  min-width: 0;
 }
 .form-grid label.span2 { grid-column: span 2; }
 .form-grid label span { font-weight: 600; color: var(--fg-2); }
@@ -1375,6 +1376,7 @@ p, .body { font-size: var(--fs-body); line-height: var(--lh-relaxed); color: var
   padding: 11px 14px; background: var(--bg-surface);
   border: 1px solid var(--border-2); border-radius: 12px;
   transition: border-color 160ms ease, box-shadow 160ms ease;
+  width: 100%; min-width: 0; box-sizing: border-box; max-width: 100%;
 }
 .form-grid input:focus,
 .form-grid select:focus,
@@ -1391,6 +1393,8 @@ p, .body { font-size: var(--fs-body); line-height: var(--lh-relaxed); color: var
 
 @media (max-width: 880px) {
   .contact__grid { grid-template-columns: 1fr; }
+  .form-grid { grid-template-columns: 1fr; }
+  .contact__form { padding: 28px 22px; }
 }
 
 /* ─── NOTICE DETAIL ────────────────────────────────────────── */
@@ -2316,8 +2320,8 @@ window.SITE_DATA = {
   ],
 };
 </script>
-<script src="config.js"></script>
-<script src="api.js"></script>
+<script src="/ui_kits/website/config.js"></script>
+<script src="/ui_kits/website/api.js"></script>
 <script type="text/babel" data-presets="react">/* global React */
 const { useState, useEffect } = React;
 
@@ -2415,7 +2419,7 @@ function Header({ nav, activeRoute, onNav, onAdminOpen }) {
           ))}
         </nav>
         <div className="site-header__actions">
-          <a className="btn btn-ghost btn-sm hide-mobile" href="admin.html" target="_top" aria-label="Admin">
+          <a className="btn btn-ghost btn-sm hide-mobile" href="/ui_kits/website/admin.html" target="_top" aria-label="Admin">
             <Icon name="lock" size={14} /> 관리자
           </a>
           <a href="#contact" className="btn btn-white btn-sm" onClick={(e) => { e.preventDefault(); onNav("contact"); }}>
@@ -2431,7 +2435,7 @@ function Header({ nav, activeRoute, onNav, onAdminOpen }) {
           {nav.filter(n => n.visible !== false).map((n) => (
             <a key={n.id} href={"#" + n.id} onClick={(e) => { e.preventDefault(); onNav(n.id); setMobile(false); }}>{n.label}</a>
           ))}
-          <a href="admin.html" target="_top" className="btn btn-ghost">
+          <a href="/ui_kits/website/admin.html" target="_top" className="btn btn-ghost">
             <Icon name="lock" size={14} /> 관리자 로그인
           </a>
         </div>
