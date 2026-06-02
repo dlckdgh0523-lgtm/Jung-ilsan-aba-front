@@ -3208,12 +3208,10 @@ function GallerySection({ gallery, asPage }) {
         )}
         <div className="gallery__grid">
           {gallery.map((g, i) => (
-            <Reveal key={g.id} delay={i * 50}>
-              <button className={"gallery__item span-" + g.span} onClick={() => setLightbox(g)}>
-                <div className="gallery__img img-zoom" style={{ backgroundImage: `url(${g.src})` }} />
-                <div className="gallery__caption"><Icon name="maximize-2" size={14}/> {g.title}</div>
-              </button>
-            </Reveal>
+            <button key={g.id} className={"gallery__item span-" + g.span} onClick={() => setLightbox(g)}>
+              <div className="gallery__img img-zoom" style={{ backgroundImage: `url(${g.src})` }} />
+              <div className="gallery__caption"><Icon name="maximize-2" size={14}/> {g.title}</div>
+            </button>
           ))}
         </div>
       </div>
