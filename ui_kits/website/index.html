@@ -2857,21 +2857,21 @@ function DirectorProfile({ profile }) {
             <Reveal className="profile-card" delay={60}>
               <h3 className="profile-card__title"><Icon name="graduation-cap" size={18}/> 학력</h3>
               <ul className="profile-card__list profile-card__list--bullet">
-                {profile.education.map((e, i) => <li key={i}>{e}</li>)}
+                {(profile.education || []).filter((e) => typeof e === "string" && e.trim()).map((e, i) => <li key={i}>{e}</li>)}
               </ul>
             </Reveal>
 
             <Reveal className="profile-card" delay={120}>
               <h3 className="profile-card__title"><Icon name="users" size={18}/> 학회 및 협회</h3>
               <ul className="profile-card__list profile-card__list--bullet">
-                {profile.societies.map((s, i) => <li key={i}>{s}</li>)}
+                {(profile.societies || []).filter((s) => typeof s === "string" && s.trim()).map((s, i) => <li key={i}>{s}</li>)}
               </ul>
             </Reveal>
 
             <Reveal className="profile-card" delay={180}>
               <h3 className="profile-card__title"><Icon name="trophy" size={18}/> 수상</h3>
               <ul className="profile-card__list profile-card__list--bullet">
-                {profile.awards.map((a, i) => <li key={i}>{a}</li>)}
+                {(profile.awards || []).filter((a) => typeof a === "string" && a.trim()).map((a, i) => <li key={i}>{a}</li>)}
               </ul>
             </Reveal>
           </div>
@@ -2905,7 +2905,7 @@ function DirectorProfile({ profile }) {
             <Reveal className="profile-card" delay={120}>
               <h3 className="profile-card__title"><Icon name="book-open" size={18}/> 추가 수련 및 자격증</h3>
               <div className="profile-card__chips">
-                {profile.training.map((t, i) => (
+                {(profile.training || []).filter((t) => typeof t === "string" && t.trim()).map((t, i) => (
                   <span key={i} className="profile-chip">{t}</span>
                 ))}
               </div>
@@ -3117,7 +3117,7 @@ function TherapistDetail({ therapist, onBack }) {
           {therapist.education?.length > 0 && (
             <Reveal className="therapist-detail__block">
               <h3><Icon name="graduation-cap" size={18}/> 학력</h3>
-              <ul>{therapist.education.map((e, i) => <li key={i}>{e}</li>)}</ul>
+              <ul>{(therapist.education || []).filter((e) => typeof e === "string" && e.trim()).map((e, i) => <li key={i}>{e}</li>)}</ul>
             </Reveal>
           )}
 
@@ -3138,7 +3138,7 @@ function TherapistDetail({ therapist, onBack }) {
           {therapist.certifications?.length > 0 && (
             <Reveal className="therapist-detail__block" delay={120}>
               <h3><Icon name="award" size={18}/> 자격증</h3>
-              <ul>{therapist.certifications.map((e, i) => <li key={i}>{e}</li>)}</ul>
+              <ul>{(therapist.certifications || []).filter((e) => typeof e === "string" && e.trim()).map((e, i) => <li key={i}>{e}</li>)}</ul>
             </Reveal>
           )}
 
