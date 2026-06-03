@@ -619,7 +619,7 @@ p, .body { font-size: var(--fs-body); line-height: var(--lh-relaxed); color: var
 }
 .hero__title {
   color: white;
-  font-size: clamp(40px, 6.5vw, 80px);
+  font-size: clamp(30px, 5.2vw, 60px);
   font-weight: 700; line-height: 1.08; letter-spacing: -0.025em;
   margin: 0 0 20px;
 }
@@ -1395,6 +1395,10 @@ p, .body { font-size: var(--fs-body); line-height: var(--lh-relaxed); color: var
   .contact__grid { grid-template-columns: 1fr; }
   .form-grid { grid-template-columns: 1fr; }
   .contact__form { padding: 28px 22px; }
+}
+/* Stack form fields earlier (incl. tablets/narrow windows) so each label sits on top, never cramped beside another field. */
+@media (max-width: 1024px) {
+  .form-grid { grid-template-columns: 1fr; }
 }
 
 /* ─── NOTICE DETAIL ────────────────────────────────────────── */
@@ -3065,7 +3069,7 @@ function TherapistsSection({ therapists, asPage }) {
           <div className="section-head">
             <span className="eyebrow">OUR THERAPISTS</span>
             <h2 className="display-2">한 아이를 위한,<br/>한 사람의 전문성</h2>
-            <p>BCBA 자격을 갖춘 원장과, 풍부한 임상 경험의 치료사들이 함께합니다.</p>
+            <p>BCBA 자격을 갖춘 센터장과, 풍부한 임상 경험의 치료사들이 함께합니다.</p>
           </div>
         )}
         <div className="therapists__list">
@@ -3598,7 +3602,7 @@ function App() {
             <PageHeader
               eyebrow="OUR THERAPISTS"
               title={"치료사 소개"}
-              sub="BCBA 자격을 갖춘 원장과, 풍부한 임상 경험의 치료사들이 함께합니다."
+              sub="BCBA 자격을 갖춘 센터장과, 풍부한 임상 경험의 치료사들이 함께합니다."
             />
             <TherapistsSection therapists={data.therapists} asPage />
           </>
