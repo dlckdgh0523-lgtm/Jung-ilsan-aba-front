@@ -1,4 +1,4 @@
-<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>정지은 일산 ABA 센터 · 일산 ABA 응용행동분석</title><meta name="description" content="정지은 일산 ABA — 응용행동분석(ABA) 기반 아동 발달·행동 중재 센터. 초기상담부터 개별치료·조기교실까지, 아이에게 필요한 방향을 함께 고민합니다."><meta property="og:type" content="website"><meta property="og:site_name" content="정지은 일산 ABA"><meta property="og:title" content="정지은 일산 ABA 센터"><meta property="og:description" content="응용행동분석(ABA) 기반 아동 발달·행동 중재 센터. 초기상담부터 개별치료·조기교실까지, 아이에게 필요한 방향을 함께 고민합니다."><meta property="og:image" content="https://www.chungaba.com/assets/photo-reception.jpg"><meta property="og:url" content="https://www.chungaba.com/"><meta property="og:locale" content="ko_KR"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="정지은 일산 ABA 센터"><meta name="twitter:description" content="응용행동분석(ABA) 기반 아동 발달·행동 중재 센터."><meta name="twitter:image" content="https://www.chungaba.com/assets/photo-reception.jpg"><style>/*  정지은 일산 ABA — Colors & Type
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>정지은 일산 ABA 센터 · 일산 ABA 응용행동분석</title><meta name="description" content="정지은 일산 ABA — 응용행동분석(ABA) 기반 아동 발달·행동 중재 센터. 초기상담부터 개별치료·조기교실까지, 아이에게 필요한 방향을 함께 고민합니다."><meta property="og:type" content="website"><meta property="og:site_name" content="정지은 일산 ABA"><meta property="og:title" content="정지은 일산 ABA 센터"><meta property="og:description" content="응용행동분석(ABA) 기반 아동 발달·행동 중재 센터. 초기상담부터 개별치료·조기교실까지, 아이에게 필요한 방향을 함께 고민합니다."><meta property="og:image" content="https://www.chungaba.com/assets/logo-aba-cream.png"><meta property="og:url" content="https://www.chungaba.com/"><meta property="og:locale" content="ko_KR"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="정지은 일산 ABA 센터"><meta name="twitter:description" content="응용행동분석(ABA) 기반 아동 발달·행동 중재 센터."><meta name="twitter:image" content="https://www.chungaba.com/assets/logo-aba-cream.png"><style>/*  정지은 일산 ABA — Colors & Type
     -----------------------------------------------------------
     Sampled directly from the brand mark (logo-aba.png).
     Pretendard is loaded via CDN — see README for substitution notes.
@@ -2573,7 +2573,6 @@ function KakaoMap({ brand, height = 360, className = "" }) {
           <Icon name="map-pin" size={18}/>
           <div>
             <strong>{brand.address}</strong>
-            <span>지하철·버스로 도착하시면 605호 옆 엘리베이터를 이용해 주세요.</span>
           </div>
         </div>
         <div className="kakao-map__actions">
@@ -3207,7 +3206,6 @@ function GallerySection({ gallery, asPage }) {
           <div className="section-head">
             <span className="eyebrow">GALLERY</span>
             <h2 className="display-2">우리 공간의 결</h2>
-            <p>아이가 편안함을 느낄 수 있도록, 공간의 작은 부분까지 함께 고민했습니다.</p>
           </div>
         )}
         <div className="gallery__grid">
@@ -3276,12 +3274,10 @@ function ContactSection({ brand, asPage }) {
           <Reveal className="contact__intro">
             <span className="eyebrow">CONTACT</span>
             <h2 className="display-2">지금, 부모님의<br/>첫 상담을 도와드릴게요.</h2>
-            <p>전화·카카오톡·문의 폼 어느 쪽이든 편하신 방법으로 알려주세요.</p>
             <div className="contact__meta">
               <div className="contact__meta-row"><Icon name="map-pin" size={18}/> {brand.address}</div>
               <div className="contact__meta-row"><Icon name="phone"   size={18}/> {brand.phone}</div>
               <div className="contact__meta-row"><Icon name="clock"   size={18}/> {brand.hours}</div>
-              <div className="contact__meta-row"><Icon name="message-circle" size={18}/> 카카오톡 · {brand.kakaoId}</div>
             </div>
             <KakaoMap brand={brand} height={300} />
           </Reveal>
@@ -3617,7 +3613,7 @@ function App() {
       case "gallery":
         return (
           <>
-            <PageHeader eyebrow="GALLERY" title={"우리 공간의 결"} sub="아이가 편안함을 느낄 수 있도록, 공간의 작은 부분까지 함께 고민했습니다." />
+            <PageHeader eyebrow="GALLERY" title={"우리 공간의 결"} />
             <GallerySection gallery={data.gallery} asPage />
           </>
         );

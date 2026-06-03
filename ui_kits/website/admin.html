@@ -3934,17 +3934,12 @@ function popupStatus(p) {
 }
 
 function PopupAdminView({ popups }) {
-  const { items, create, update } = useEditableList(popups, { idPrefix: "pop", resource: "popups" });
+  const { items, create, update, remove } = useEditableList(popups, { idPrefix: "pop", resource: "popups" });
   const [editing, setEditing] = useStateAdmin(null);
   useEffectAdmin(() => { if (window.lucide) renderLucideIcons(); });
 
   const today = new Date().toISOString().slice(0, 10);
   const live = items.filter(p => !p.deletedAt);
-
-  const softDelete = (p) => {
-    if (!confirm("이 팝업을 삭제하시겠습니까? (복구 가능한 소프트 삭제)")) return;
-    update({ ...p, deletedAt: new Date().toISOString(), updatedAt: today });
-  };
 
   const newPopup = () => setEditing({
     _new: true, title: "", content: "", imageUrl: "", linkUrl: "",
@@ -3983,7 +3978,7 @@ function PopupAdminView({ popups }) {
                     <i data-lucide={p.isActive ? "eye" : "eye-off"} style={{width:16,height:16}}/>
                   </button>
                   <button className="icon-btn" onClick={() => setEditing({ ...p })}><i data-lucide="pencil" style={{width:16,height:16}}/></button>
-                  <button className="icon-btn" onClick={() => softDelete(p)}><i data-lucide="trash-2" style={{width:16,height:16}}/></button>
+                  <button className="icon-btn" onClick={() => remove(p.id)}><i data-lucide="trash-2" style={{width:16,height:16}}/></button>
                 </td>
               </tr>
             );
