@@ -3603,14 +3603,68 @@ function FieldText({ label, value, onChange, kind = "text", placeholder }) {
   );
 }
 
+/* Career editor (현/전 + 내용 rows) — reused for 근무 경력 / 강의 경력. */
+function DirCareerEditor({ label, items, onChange }) {
+  const list = (Array.isArray(items) ? items : []).map((c) => (c && typeof c === "object" && !Array.isArray(c) ? { period: c.period || "현", text: c.text || "" } : { period: "현", text: "" }));
+  return (
+    <div className="cms-field">
+      <span>{label}</span>
+      <div className="cms-sections">
+        {list.map((c, idx) => (
+          <div key={idx} className="cms-section-row">
+            <div className="cms-section-row__head">
+              <div style={{display:"flex",gap:"4px",flexShrink:0}}>
+                <button type="button" className={"btn btn-sm " + (c.period === "전" ? "btn-ghost" : "btn-primary")} onClick={()=>onChange(list.map((it,i)=>i===idx?{...it,period:"현"}:it))}>현</button>
+                <button type="button" className={"btn btn-sm " + (c.period === "전" ? "btn-primary" : "btn-ghost")} onClick={()=>onChange(list.map((it,i)=>i===idx?{...it,period:"전"}:it))}>전</button>
+              </div>
+              <input type="text" value={c.text || ""} placeholder="경력 내용" onChange={(e)=>onChange(list.map((it,i)=>i===idx?{...it,text:e.target.value}:it))}/>
+              <button type="button" className="icon-btn" onClick={()=>onChange(list.filter((_,i)=>i!==idx))}><i data-lucide="trash-2" style={{width:14,height:14}}/></button>
+            </div>
+          </div>
+        ))}
+        <button type="button" className="btn btn-ghost btn-sm" onClick={()=>onChange([...list,{period:"현",text:""}])}>
+          <i data-lucide="plus" style={{width:14,height:14}}/> 경력 추가
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/* Papers editor (연도 + 제목 rows). */
+function DirPapersEditor({ items, onChange }) {
+  const list = (Array.isArray(items) ? items : []).map((p) => (p && typeof p === "object" && !Array.isArray(p) ? { year: p.year || "", title: p.title || "" } : { year: "", title: "" }));
+  return (
+    <div className="cms-field">
+      <span>논문 (연도 · 제목)</span>
+      <div className="cms-sections">
+        {list.map((p, idx) => (
+          <div key={idx} className="cms-section-row">
+            <div className="cms-section-row__head">
+              <input type="text" value={p.year || ""} placeholder="연도" style={{maxWidth:110,flexShrink:0}} onChange={(e)=>onChange(list.map((it,i)=>i===idx?{...it,year:e.target.value}:it))}/>
+              <input type="text" value={p.title || ""} placeholder="논문 제목" onChange={(e)=>onChange(list.map((it,i)=>i===idx?{...it,title:e.target.value}:it))}/>
+              <button type="button" className="icon-btn" onClick={()=>onChange(list.filter((_,i)=>i!==idx))}><i data-lucide="trash-2" style={{width:14,height:14}}/></button>
+            </div>
+          </div>
+        ))}
+        <button type="button" className="btn btn-ghost btn-sm" onClick={()=>onChange([...list,{year:"",title:""}])}>
+          <i data-lucide="plus" style={{width:14,height:14}}/> 논문 추가
+        </button>
+      </div>
+    </div>
+  );
+}
+
 /* ─── DIRECTOR (CENTER HEAD PROFILE) ──────────────────────── */
 function DirectorAdminView({ profile }) {
   const [d, setD] = useStateAdmin(() => {
     const p = { ...profile };
-    // Coerce malformed career entries (legacy [] / non-objects) into clean {period,text}.
-    p.career = (Array.isArray(p.career) ? p.career : []).map((c) =>
-      c && typeof c === "object" && !Array.isArray(c) ? { period: c.period || "현", text: c.text || "" } : { period: "현", text: "" }
+    // Split the stored career list into 강의(lecture)/근무(work) by `kind`; legacy entries (no kind) → 근무.
+    const career = (Array.isArray(p.career) ? p.career : []).map((c) =>
+      c && typeof c === "object" && !Array.isArray(c) ? { period: c.period || "현", text: c.text || "", kind: c.kind } : { period: "현", text: "", kind: undefined }
     );
+    p.lectureCareer = career.filter((c) => c.kind === "lecture").map((c) => ({ period: c.period, text: c.text }));
+    p.workCareer = career.filter((c) => c.kind !== "lecture").map((c) => ({ period: c.period, text: c.text }));
+    delete p.career;
     return p;
   });
   const [saved, setSaved] = useStateAdmin(false);
@@ -3626,15 +3680,18 @@ function DirectorAdminView({ profile }) {
           if (!window.ABA_API) { setSaved(true); return; }
           // Save-time guard: drop any malformed/empty career & paper entries so the record can never be re-corrupted.
           const cleanList = (a) => (Array.isArray(a) ? a : []).map((s) => (typeof s === "string" ? s.trim() : s)).filter((s) => typeof s === "string" && s);
+          const cleanCareer = (a, kind) => (Array.isArray(a) ? a : []).filter((c) => c && typeof c === "object" && String(c.text || "").trim()).map((c) => ({ period: c.period === "전" ? "전" : "현", text: c.text, kind }));
           const payload = { ...d,
             education: cleanList(d.education),
             societies: cleanList(d.societies),
             organizations: cleanList(d.organizations),
             awards: cleanList(d.awards),
             training: cleanList(d.training),
-            career: (Array.isArray(d.career) ? d.career : []).filter((c) => c && typeof c === "object" && !Array.isArray(c) && String(c.text || "").trim()).map((c) => ({ period: c.period === "전" ? "전" : "현", text: c.text })),
-            papers: (Array.isArray(d.papers) ? d.papers : []).filter((p) => p && typeof p === "object" && !Array.isArray(p) && (p.title || p.year)),
+            career: [...cleanCareer(d.workCareer, "work"), ...cleanCareer(d.lectureCareer, "lecture")],
+            papers: (Array.isArray(d.papers) ? d.papers : []).filter((p) => p && typeof p === "object" && !Array.isArray(p) && (p.title || p.year)).map((p) => ({ year: p.year || "", title: p.title || "" })),
           };
+          delete payload.lectureCareer;
+          delete payload.workCareer;
           window.ABA_API.put("/director", payload).then(() => setSaved(true)).catch((e) => alert((e && e.message) || "저장에 실패했습니다."));
         }}>
           <i data-lucide="save" style={{width:14,height:14}}/> 저장
@@ -3701,26 +3758,9 @@ function DirectorAdminView({ profile }) {
           <textarea rows="4" value={(d.organizations || []).join("\n")} onChange={(e)=>update("organizations", e.target.value.split("\n"))}/>
         </div>
 
-        <div className="cms-field">
-          <span>경력</span>
-          <div className="cms-sections">
-            {(d.career || []).map((c, idx) => (
-              <div key={idx} className="cms-section-row">
-                <div className="cms-section-row__head">
-                  <div style={{display:"flex",gap:"4px",flexShrink:0}}>
-                    <button type="button" className={"btn btn-sm " + (c.period === "전" ? "btn-ghost" : "btn-primary")} onClick={()=>update("career",(d.career||[]).map((it,i)=>i===idx?{...it,period:"현"}:it))}>현</button>
-                    <button type="button" className={"btn btn-sm " + (c.period === "전" ? "btn-primary" : "btn-ghost")} onClick={()=>update("career",(d.career||[]).map((it,i)=>i===idx?{...it,period:"전"}:it))}>전</button>
-                  </div>
-                  <input type="text" value={c.text || ""} placeholder="경력 내용" onChange={(e)=>update("career",(d.career||[]).map((it,i)=>i===idx?{...it,text:e.target.value}:it))}/>
-                  <button type="button" className="icon-btn" onClick={()=>update("career",(d.career||[]).filter((_,i)=>i!==idx))}><i data-lucide="trash-2" style={{width:14,height:14}}/></button>
-                </div>
-              </div>
-            ))}
-            <button type="button" className="btn btn-ghost btn-sm" onClick={()=>update("career",[...(d.career||[]),{period:"현",text:""}])}>
-              <i data-lucide="plus" style={{width:14,height:14}}/> 경력 추가
-            </button>
-          </div>
-        </div>
+        <DirCareerEditor label="근무 경력" items={d.workCareer} onChange={(v)=>update("workCareer", v)} />
+        <DirCareerEditor label="강의 경력" items={d.lectureCareer} onChange={(v)=>update("lectureCareer", v)} />
+        <DirPapersEditor items={d.papers} onChange={(v)=>update("papers", v)} />
 
         <div className="cms-field">
           <span>수상 · 표창 (한 줄에 하나)</span>
@@ -3859,6 +3899,7 @@ function TherapistsAdminView({ therapists }) {
             { key: "education", label: "학력 (한 줄에 하나)", kind: "list" },
             { key: "career", label: "경력", kind: "career" },
             { key: "certifications", label: "자격증 (한 줄에 하나)", kind: "list" },
+            { key: "papers", label: "논문 (연도 · 제목)", kind: "papers" },
             { key: "completion", label: "이수 과정" },
           ]}
         />
@@ -4436,6 +4477,28 @@ function CrudModal({ title, draft, onClose, onSave, fields }) {
                     ))}
                     <button type="button" className="btn btn-ghost btn-sm" onClick={() => update(f.key, [...careerArr, {period:"현", text:""}])}>
                       <i data-lucide="plus" style={{width:14,height:14}}/> 경력 추가
+                    </button>
+                  </div>
+                </label>
+              );
+            }
+            if (f.kind === "papers") {
+              const papersArr = (get(f.key) || []).map((p) => (p && typeof p === "object" && !Array.isArray(p) ? { year: p.year || "", title: p.title || "" } : { year: "", title: "" }));
+              return (
+                <label key={f.key} className="cms-field">
+                  <span>{f.label}</span>
+                  <div className="cms-sections">
+                    {papersArr.map((p, idx) => (
+                      <div key={idx} className="cms-section-row">
+                        <div className="cms-section-row__head">
+                          <input type="text" value={p.year || ""} placeholder="연도" style={{maxWidth:110,flexShrink:0}} onChange={(e) => update(f.key, papersArr.map((it,i)=>i===idx?{...it,year:e.target.value}:it))}/>
+                          <input type="text" value={p.title || ""} placeholder="논문 제목" onChange={(e) => update(f.key, papersArr.map((it,i)=>i===idx?{...it,title:e.target.value}:it))}/>
+                          <button type="button" className="icon-btn" onClick={() => update(f.key, papersArr.filter((_,i)=>i!==idx))}><i data-lucide="trash-2" style={{width:14,height:14}}/></button>
+                        </div>
+                      </div>
+                    ))}
+                    <button type="button" className="btn btn-ghost btn-sm" onClick={() => update(f.key, [...papersArr, {year:"", title:""}])}>
+                      <i data-lucide="plus" style={{width:14,height:14}}/> 논문 추가
                     </button>
                   </div>
                 </label>

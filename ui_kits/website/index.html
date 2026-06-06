@@ -2882,10 +2882,11 @@ function DirectorProfile({ profile }) {
 
           {/* RIGHT COLUMN */}
           <div className="director-profile__col">
+            {(profile.career || []).filter((c) => c && c.text && c.kind !== "lecture").length > 0 && (
             <Reveal className="profile-card">
-              <h3 className="profile-card__title"><Icon name="briefcase" size={18}/> 경력</h3>
+              <h3 className="profile-card__title"><Icon name="briefcase" size={18}/> 근무 경력</h3>
               <ul className="profile-card__timeline">
-                {(profile.career || []).filter((c) => c && c.text).map((c, i) => (
+                {(profile.career || []).filter((c) => c && c.text && c.kind !== "lecture").map((c, i) => (
                   <li key={i}>
                     <span className={"timeline__pin" + (c.period === "현" ? " is-current" : "")}>{c.period || "현"}</span>
                     <span className="timeline__text">{c.text}</span>
@@ -2893,6 +2894,21 @@ function DirectorProfile({ profile }) {
                 ))}
               </ul>
             </Reveal>
+            )}
+
+            {(profile.career || []).filter((c) => c && c.text && c.kind === "lecture").length > 0 && (
+            <Reveal className="profile-card" delay={40}>
+              <h3 className="profile-card__title"><Icon name="megaphone" size={18}/> 강의 경력</h3>
+              <ul className="profile-card__timeline">
+                {(profile.career || []).filter((c) => c && c.text && c.kind === "lecture").map((c, i) => (
+                  <li key={i}>
+                    <span className={"timeline__pin" + (c.period === "현" ? " is-current" : "")}>{c.period || "현"}</span>
+                    <span className="timeline__text">{c.text}</span>
+                  </li>
+                ))}
+              </ul>
+            </Reveal>
+            )}
 
             <Reveal className="profile-card" delay={60}>
               <h3 className="profile-card__title"><Icon name="file-text" size={18}/> 논문</h3>
@@ -3150,6 +3166,17 @@ function TherapistDetail({ therapist, onBack }) {
             <Reveal className="therapist-detail__block" delay={180}>
               <h3><Icon name="megaphone" size={18}/> 강의</h3>
               <ul>{therapist.teaching.map((e, i) => <li key={i}>{e}</li>)}</ul>
+            </Reveal>
+          )}
+
+          {(therapist.papers || []).filter((p) => p && (p.title || p.year)).length > 0 && (
+            <Reveal className="therapist-detail__block" delay={210}>
+              <h3><Icon name="file-text" size={18}/> 논문</h3>
+              <ul>
+                {(therapist.papers || []).filter((p) => p && (p.title || p.year)).map((p, i) => (
+                  <li key={i}>{p.year ? <strong style={{ color: "var(--brand-green-deep)", marginRight: 8 }}>{p.year}</strong> : null}{p.title}</li>
+                ))}
+              </ul>
             </Reveal>
           )}
 
