@@ -3315,6 +3315,8 @@ function DashboardView({ data, consultations, setView }) {
 /* ─── CONSULTATIONS LIST ──────────────────────────────────── */
 function ConsultationsView({ items, onRead, onRemove }) {
   useEffectAdmin(() => { if (window.lucide) renderLucideIcons(); }, [items]);
+  const [detail, setDetail] = useStateAdmin(null);
+  const openDetail = (c) => { setDetail(c); if (!c.read) onRead(c.id); };
   const seed = () => {
     const sample = { id: "c-" + Date.now(), ts: Date.now(), parent: "테스트 부모님", phone: "010-1234-5678", age: "만 4세", topic: "조기교실", note: "샘플 데이터입니다.", read: false };
     const list = JSON.parse(localStorage.getItem("aba-consultations") || "[]");
@@ -3322,7 +3324,9 @@ function ConsultationsView({ items, onRead, onRemove }) {
     localStorage.setItem("aba-consultations", JSON.stringify(list));
     try { new BroadcastChannel("aba-consult").postMessage({ kind: "new", payload: sample }); } catch {}
   };
+  const nameBtnStyle = { background: "none", border: "none", padding: 0, cursor: "pointer", color: "inherit", font: "inherit", textAlign: "left" };
   return (
+    <>
     <section className="cms__card">
       <header>
         <h3>상담 신청 ({items.length}) · 미확인 {items.filter(c=>!c.read).length}</h3>
@@ -3340,7 +3344,7 @@ function ConsultationsView({ items, onRead, onRemove }) {
             {items.map((c) => (
               <tr key={c.id} className={c.read ? "" : "is-unread"}>
                 <td>{!c.read && <span className="cms__dot"/>}</td>
-                <td><strong>{c.parent || "익명"}</strong>{c.note && <div className="muted">{c.note}</div>}</td>
+                <td><button style={nameBtnStyle} onClick={() => openDetail(c)}><strong>{c.parent || "익명"}</strong></button>{c.note && <div className="muted">{c.note.length > 36 ? c.note.slice(0, 36) + "…" : c.note}</div>}</td>
                 <td>{c.phone || "-"}</td>
                 <td>{c.age || "-"}</td>
                 <td>{c.topic || "-"}</td>
@@ -3350,13 +3354,57 @@ function ConsultationsView({ items, onRead, onRemove }) {
                     ? <span className="cms__pill cms__pill--neutral">확인</span>
                     : <button className="cms__pill cms__pill--orange" onClick={() => onRead(c.id)} style={{border:"none",cursor:"pointer"}}>읽음 처리</button>}
                 </td>
-                <td><button className="icon-btn" onClick={() => onRemove(c.id)}><i data-lucide="trash-2" style={{width:16,height:16}}/></button></td>
+                <td style={{ whiteSpace: "nowrap" }}>
+                  <button className="icon-btn" onClick={() => openDetail(c)} title="상세 보기"><i data-lucide="eye" style={{width:16,height:16}}/></button>
+                  <button className="icon-btn" onClick={() => onRemove(c.id)} title="삭제"><i data-lucide="trash-2" style={{width:16,height:16}}/></button>
+                </td>
               </tr>
             ))}
           </tbody>
         </table>
       )}
     </section>
+    {detail && <ConsultationDetailModal item={detail} onClose={() => setDetail(null)} onRemove={(id) => { onRemove(id); setDetail(null); }} />}
+    </>
+  );
+}
+
+function ConsultationDetailModal({ item, onClose, onRemove }) {
+  useEffectAdmin(() => { if (window.lucide) renderLucideIcons(); }, []);
+  const c = item || {};
+  const rows = [
+    ["부모님 성함", c.parent || "익명"],
+    ["연락처", c.phone || "-"],
+    ["아이 연령", c.age || "-"],
+    ["상담 분야", c.topic || "-"],
+    ["접수 시각", formatTime(c.ts)],
+  ];
+  return (
+    <div className="cms-modal" onClick={onClose}>
+      <div className="cms-modal__inner" onClick={(e) => e.stopPropagation()}>
+        <header className="cms-modal__head">
+          <h3>상담 신청 상세</h3>
+          <button className="icon-btn" onClick={onClose}><i data-lucide="x" style={{width:18,height:18}}/></button>
+        </header>
+        <div className="cms-modal__body">
+          {rows.map(([label, value]) => (
+            <div key={label} style={{ display: "flex", gap: 14, padding: "8px 0", borderBottom: "1px solid var(--border-1)" }}>
+              <div style={{ width: 84, flexShrink: 0, color: "var(--fg-3)", fontSize: 13, fontWeight: 600 }}>{label}</div>
+              <div style={{ color: "var(--fg-1)", fontSize: 14.5, fontWeight: label === "부모님 성함" ? 700 : 400 }}>{value}</div>
+            </div>
+          ))}
+          <div style={{ paddingTop: 14 }}>
+            <div style={{ color: "var(--fg-3)", fontSize: 13, fontWeight: 600, marginBottom: 7 }}>상담 내용</div>
+            <div style={{ whiteSpace: "pre-wrap", lineHeight: 1.65, color: "var(--fg-1)", fontSize: 14.5, background: "var(--bg-muted)", borderRadius: 10, padding: "13px 15px", minHeight: 64 }}>{c.note ? c.note : "(작성된 상담 내용이 없습니다.)"}</div>
+          </div>
+        </div>
+        <footer className="cms-modal__foot">
+          {c.phone && <a className="btn btn-secondary btn-sm" href={"tel:" + c.phone}><i data-lucide="phone" style={{width:14,height:14}}/> 전화 걸기</a>}
+          <button className="btn btn-ghost btn-sm" onClick={() => onRemove(c.id)}><i data-lucide="trash-2" style={{width:14,height:14}}/> 삭제</button>
+          <button className="btn btn-primary btn-sm" onClick={onClose}>닫기</button>
+        </footer>
+      </div>
+    </div>
   );
 }
 
