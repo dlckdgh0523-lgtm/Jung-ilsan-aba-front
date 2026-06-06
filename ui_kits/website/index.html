@@ -2554,19 +2554,19 @@ function KakaoMap({ brand, height = 360, className = "" }) {
   const openNaver = () => window.open(brand.naverMapUrl || ("https://map.naver.com/v5/search/" + encodeURIComponent(brand.address)), "_blank", "noopener");
 
   const mapsApi = (window.SITE_DATA && window.SITE_DATA.brand && window.SITE_DATA.brand.kakaoMapAppKey);
-  const lat = brand.coords?.lat || 37.6707;
-  const lng = brand.coords?.lng || 126.7547;
-
-  // Address-driven map embed — follows brand.address (no API key needed).
-  const mapQuery = encodeURIComponent(brand.address || "경기도 고양시 일산서구 주엽로 150");
-  const gmapEmbed = `https://maps.google.com/maps?q=${mapQuery}&z=17&hl=ko&output=embed`;
+  // Center location (자유프라자 · 주엽로 150). Hardcoded: Korean geocoders lack this address,
+  // the marker must sit exactly on the building, and OSM tiles render Korea accurately.
+  const lat = 37.6719613;
+  const lng = 126.7588947;
+  const bbox = `${lng - 0.0026},${lat - 0.0015},${lng + 0.0026},${lat + 0.0015}`;
+  const osmEmbed = `https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik&marker=${lat},${lng}`;
 
   return (
     <div className={"kakao-map " + className}>
       <div className="kakao-map__frame" style={{ height }}>
         <iframe
           title="센터 위치"
-          src={gmapEmbed}
+          src={osmEmbed}
           loading="lazy"
           referrerPolicy="no-referrer-when-downgrade"
           style={{ border: 0, width: "100%", height: "100%" }}
