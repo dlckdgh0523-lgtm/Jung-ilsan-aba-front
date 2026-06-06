@@ -1864,7 +1864,7 @@ window.SITE_DATA = {
     nameKo: "정지은 일산 ABA",
     nameEn: "CHUNG ji eun applied behavior analysis",
     tagline: "한 아이의 속도로, 한 걸음씩.",
-    address: "경기도 고양시 일산서구 주엽동 18번지 자유프라자 606호",
+    address: "경기도 고양시 일산서구 주엽로 150 606호",
     phone: "031-977-2575",
     fax: "031-977-2575",
     kakaoId: "@jungjieun_aba",
@@ -2557,16 +2557,16 @@ function KakaoMap({ brand, height = 360, className = "" }) {
   const lat = brand.coords?.lat || 37.6707;
   const lng = brand.coords?.lng || 126.7547;
 
-  // Static map preview using OpenStreetMap (no API key required)
-  const bbox = `${lng - 0.003},${lat - 0.0018},${lng + 0.003},${lat + 0.0018}`;
-  const osmEmbed = `https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik&marker=${lat},${lng}`;
+  // Address-driven map embed — follows brand.address (no API key needed).
+  const mapQuery = encodeURIComponent(brand.address || "경기도 고양시 일산서구 주엽로 150");
+  const gmapEmbed = `https://maps.google.com/maps?q=${mapQuery}&z=17&hl=ko&output=embed`;
 
   return (
     <div className={"kakao-map " + className}>
       <div className="kakao-map__frame" style={{ height }}>
         <iframe
           title="센터 위치"
-          src={osmEmbed}
+          src={gmapEmbed}
           loading="lazy"
           referrerPolicy="no-referrer-when-downgrade"
           style={{ border: 0, width: "100%", height: "100%" }}
