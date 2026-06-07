@@ -1503,6 +1503,7 @@ p, .body { font-size: var(--fs-body); line-height: var(--lh-relaxed); color: var
 .page-head p { max-width: 720px; font-size: 17px; color: var(--fg-2); line-height: 1.7; margin: 0; }
 
 main.is-subpage > section:first-of-type { padding-top: clamp(48px, 7vw, 88px); }
+main.is-subpage > .director-profile:first-child { margin-top: 0; border-top: none; }
 
 /* ─── PROGRAM TILE ─────────────────────────────────────────── */
 .program-tile {
@@ -3653,12 +3654,7 @@ function App() {
         );
       case "director": {
         const dprofile = window.SITE_DATA && window.SITE_DATA.directorProfile;
-        return (
-          <>
-            <PageHeader eyebrow="DIRECTOR" title={"센터장 소개"} sub="ABA 전문 센터장이 직접 이끄는 발달 지원." />
-            {dprofile && <DirectorProfile profile={dprofile} />}
-          </>
-        );
+        return dprofile ? <DirectorProfile profile={dprofile} /> : null;
       }
       case "programs":
         return (
