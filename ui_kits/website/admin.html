@@ -3603,6 +3603,24 @@ function FieldText({ label, value, onChange, kind = "text", placeholder }) {
   );
 }
 
+/* Shared list reorder helpers (위/아래 ↑↓). */
+function moveItem(list, idx, dir) {
+  const a = Array.isArray(list) ? list : [];
+  const ni = idx + dir;
+  if (ni < 0 || ni >= a.length) return a;
+  const out = [...a];
+  [out[idx], out[ni]] = [out[ni], out[idx]];
+  return out;
+}
+function OrderBtns({ idx, len, onMove }) {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 1, flexShrink: 0 }}>
+      <button type="button" className="icon-btn" title="위로" disabled={idx === 0} style={{ width: 24, height: 17, opacity: idx === 0 ? 0.3 : 1 }} onClick={() => onMove(idx, -1)}><i data-lucide="chevron-up" style={{width:14,height:14}}/></button>
+      <button type="button" className="icon-btn" title="아래로" disabled={idx === len - 1} style={{ width: 24, height: 17, opacity: idx === len - 1 ? 0.3 : 1 }} onClick={() => onMove(idx, 1)}><i data-lucide="chevron-down" style={{width:14,height:14}}/></button>
+    </div>
+  );
+}
+
 /* Career editor (현/전 + 내용 rows) — reused for 근무 경력 / 강의 경력. */
 function DirCareerEditor({ label, items, onChange }) {
   const list = (Array.isArray(items) ? items : []).map((c) => (c && typeof c === "object" && !Array.isArray(c) ? { period: c.period || "현", text: c.text || "" } : { period: "현", text: "" }));
@@ -3618,6 +3636,7 @@ function DirCareerEditor({ label, items, onChange }) {
                 <button type="button" className={"btn btn-sm " + (c.period === "전" ? "btn-primary" : "btn-ghost")} onClick={()=>onChange(list.map((it,i)=>i===idx?{...it,period:"전"}:it))}>전</button>
               </div>
               <input type="text" value={c.text || ""} placeholder="경력 내용" onChange={(e)=>onChange(list.map((it,i)=>i===idx?{...it,text:e.target.value}:it))}/>
+              <OrderBtns idx={idx} len={list.length} onMove={(i,dir)=>onChange(moveItem(list,i,dir))}/>
               <button type="button" className="icon-btn" onClick={()=>onChange(list.filter((_,i)=>i!==idx))}><i data-lucide="trash-2" style={{width:14,height:14}}/></button>
             </div>
           </div>
@@ -3642,6 +3661,7 @@ function DirPapersEditor({ items, onChange }) {
             <div className="cms-section-row__head">
               <input type="text" value={p.year || ""} placeholder="연도" style={{maxWidth:110,flexShrink:0}} onChange={(e)=>onChange(list.map((it,i)=>i===idx?{...it,year:e.target.value}:it))}/>
               <input type="text" value={p.title || ""} placeholder="논문 제목" onChange={(e)=>onChange(list.map((it,i)=>i===idx?{...it,title:e.target.value}:it))}/>
+              <OrderBtns idx={idx} len={list.length} onMove={(i,dir)=>onChange(moveItem(list,i,dir))}/>
               <button type="button" className="icon-btn" onClick={()=>onChange(list.filter((_,i)=>i!==idx))}><i data-lucide="trash-2" style={{width:14,height:14}}/></button>
             </div>
           </div>
@@ -3897,7 +3917,8 @@ function TherapistsAdminView({ therapists }) {
             { key: "role", label: "역할" },
             { key: "summary", label: "한 줄 소개", kind: "textarea" },
             { key: "education", label: "학력 (한 줄에 하나)", kind: "list" },
-            { key: "career", label: "경력", kind: "career" },
+            { key: "career", label: "근무 경력", kind: "career" },
+            { key: "teaching", label: "강의 경력 (한 줄에 하나)", kind: "listrows" },
             { key: "certifications", label: "자격증 (한 줄에 하나)", kind: "list" },
             { key: "papers", label: "논문 (연도 · 제목)", kind: "papers" },
             { key: "completion", label: "이수 과정" },
@@ -4413,6 +4434,28 @@ function CrudModal({ title, draft, onClose, onSave, fields }) {
                 </label>
               );
             }
+            if (f.kind === "listrows") {
+              const arr = (get(f.key) || []).map((x) => (typeof x === "string" ? x : (x && x.text) || ""));
+              return (
+                <label key={f.key} className="cms-field">
+                  <span>{f.label}</span>
+                  <div className="cms-sections">
+                    {arr.map((s, idx) => (
+                      <div key={idx} className="cms-section-row">
+                        <div className="cms-section-row__head">
+                          <input type="text" value={s} placeholder="내용" onChange={(e) => update(f.key, arr.map((it,i)=>i===idx?e.target.value:it))}/>
+                          <OrderBtns idx={idx} len={arr.length} onMove={(i,dir)=>update(f.key, moveItem(arr,i,dir))}/>
+                          <button type="button" className="icon-btn" onClick={() => update(f.key, arr.filter((_,i)=>i!==idx))}><i data-lucide="trash-2" style={{width:14,height:14}}/></button>
+                        </div>
+                      </div>
+                    ))}
+                    <button type="button" className="btn btn-ghost btn-sm" onClick={() => update(f.key, [...arr, ""])}>
+                      <i data-lucide="plus" style={{width:14,height:14}}/> 추가
+                    </button>
+                  </div>
+                </label>
+              );
+            }
             if (f.kind === "list") {
               return (
                 <label key={f.key} className="cms-field">
@@ -4471,6 +4514,7 @@ function CrudModal({ title, draft, onClose, onSave, fields }) {
                             <button type="button" className={"btn btn-sm " + (c.period === "전" ? "btn-primary" : "btn-ghost")} onClick={() => update(f.key, careerArr.map((it,i)=>i===idx?{...it,period:"전"}:it))}>전</button>
                           </div>
                           <input type="text" value={c.text || ""} placeholder="경력 내용" onChange={(e) => update(f.key, careerArr.map((it,i)=>i===idx?{...it,text:e.target.value}:it))}/>
+                          <OrderBtns idx={idx} len={careerArr.length} onMove={(i,dir)=>update(f.key, moveItem(careerArr,i,dir))}/>
                           <button type="button" className="icon-btn" onClick={() => update(f.key, careerArr.filter((_,i)=>i!==idx))}><i data-lucide="trash-2" style={{width:14,height:14}}/></button>
                         </div>
                       </div>
@@ -4493,6 +4537,7 @@ function CrudModal({ title, draft, onClose, onSave, fields }) {
                         <div className="cms-section-row__head">
                           <input type="text" value={p.year || ""} placeholder="연도" style={{maxWidth:110,flexShrink:0}} onChange={(e) => update(f.key, papersArr.map((it,i)=>i===idx?{...it,year:e.target.value}:it))}/>
                           <input type="text" value={p.title || ""} placeholder="논문 제목" onChange={(e) => update(f.key, papersArr.map((it,i)=>i===idx?{...it,title:e.target.value}:it))}/>
+                          <OrderBtns idx={idx} len={papersArr.length} onMove={(i,dir)=>update(f.key, moveItem(papersArr,i,dir))}/>
                           <button type="button" className="icon-btn" onClick={() => update(f.key, papersArr.filter((_,i)=>i!==idx))}><i data-lucide="trash-2" style={{width:14,height:14}}/></button>
                         </div>
                       </div>
