@@ -88,6 +88,8 @@
 
     // ── uploads (admin) → { url, width, height, ... } ──
     upload: function (file) { var fd = new FormData(); fd.append('file', file); return request('POST', '/uploads', fd); },
+    // ── file uploads (admin, non-image: xlsx/pdf/...) → { url, name, size, ext } ──
+    uploadFile: function (file) { var fd = new FormData(); fd.append('file', file); return request('POST', '/uploads/file', fd); },
 
     // ── realtime (EventSource carries the JWT in the query — it can't set headers) ──
     sse: function (path) {

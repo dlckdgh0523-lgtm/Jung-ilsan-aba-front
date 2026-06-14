@@ -3486,6 +3486,14 @@ function readImageFile(file, cb) {
   reader.readAsDataURL(file);
 }
 
+/* Upload an arbitrary file (xlsx/pdf/etc.) → { name, url, size } for notice attachments. */
+function readFileUpload(file, cb) {
+  if (!file || !(window.ABA_API && window.ABA_API.uploadFile)) return;
+  window.ABA_API.uploadFile(file)
+    .then((r) => cb(r && r.url ? { name: r.name, url: r.url, size: r.size } : null))
+    .catch((err) => alert((err && err.message) || "파일 업로드에 실패했습니다."));
+}
+
 function RowActions({ visible, onEdit, onDelete, onUp, onDown, onToggle }) {
   return (
     <div className="cms__row-actions">
@@ -3976,6 +3984,8 @@ function NoticesAdminView({ notices }) {
             { key: "title", label: "제목" },
             { key: "date", label: "작성일", placeholder: "2026.05.25" },
             { key: "pinned", label: "상단 고정", kind: "checkbox" },
+            { key: "image", label: "사진 (선택)", kind: "photo" },
+            { key: "attachments", label: "첨부 파일 (엑셀·PDF 등)", kind: "files" },
             { key: "body", label: "본문", kind: "textarea" },
           ]}
         />
@@ -4545,6 +4555,35 @@ function CrudModal({ title, draft, onClose, onSave, fields }) {
                     <button type="button" className="btn btn-ghost btn-sm" onClick={() => update(f.key, [...papersArr, {year:"", title:""}])}>
                       <i data-lucide="plus" style={{width:14,height:14}}/> 논문 추가
                     </button>
+                  </div>
+                </label>
+              );
+            }
+            if (f.kind === "files") {
+              const arr = (get(f.key) || []).filter((x) => x && x.url);
+              const addFiles = (fileList) => {
+                Array.from(fileList || []).forEach((file) => readFileUpload(file, (att) => {
+                  if (att) setD((o) => ({ ...o, [f.key]: [...(Array.isArray(o[f.key]) ? o[f.key] : []), att] }));
+                }));
+              };
+              return (
+                <label key={f.key} className="cms-field">
+                  <span>{f.label}</span>
+                  <div className="cms-sections">
+                    {arr.map((a, idx) => (
+                      <div key={idx} className="cms-section-row">
+                        <div className="cms-section-row__head">
+                          <i data-lucide="paperclip" style={{width:15,height:15,flexShrink:0,color:"var(--fg-3)"}}/>
+                          <span style={{flex:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",fontSize:13}}>{a.name}{a.size ? " (" + Math.max(1, Math.round(a.size/1024)) + "KB)" : ""}</span>
+                          <OrderBtns idx={idx} len={arr.length} onMove={(i,dir)=>update(f.key, moveItem(arr,i,dir))}/>
+                          <button type="button" className="icon-btn" onClick={()=>update(f.key, arr.filter((_,i)=>i!==idx))}><i data-lucide="trash-2" style={{width:14,height:14}}/></button>
+                        </div>
+                      </div>
+                    ))}
+                    <label className="btn btn-ghost btn-sm" style={{cursor:"pointer",alignSelf:"flex-start"}}>
+                      <i data-lucide="upload" style={{width:14,height:14}}/> 파일 첨부
+                      <input type="file" multiple hidden onChange={(e)=>{ addFiles(e.target.files); e.target.value=""; }}/>
+                    </label>
                   </div>
                 </label>
               );
