@@ -4125,10 +4125,8 @@ function PopupAdminView({ popups }) {
             setEditing(null);
           }}
           fields={[
-            { key: "imageUrl", label: "이미지", kind: "photo" },
-            { key: "title", label: "제목" },
-            { key: "content", label: "내용", kind: "textarea" },
-            { key: "linkUrl", label: "링크 URL", placeholder: "#contact 또는 https://…" },
+            { key: "imageUrl", label: "팝업 이미지 (이 사진만 표시됩니다)", kind: "photo" },
+            { key: "linkUrl", label: "클릭 시 이동 링크 (선택)", placeholder: "#contact 또는 https://…" },
             { key: "_dates", kind: "date-row", keys: ["startAt", "endAt"], labels: ["노출 시작일", "노출 종료일"] },
             { key: "isActive", label: "활성화", kind: "toggle" },
             { key: "allowHideToday", label: "오늘 하루 숨김 허용", kind: "toggle" },
