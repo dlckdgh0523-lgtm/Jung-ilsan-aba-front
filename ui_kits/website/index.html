@@ -477,7 +477,7 @@ p, .body { font-size: var(--fs-body); line-height: var(--lh-relaxed); color: var
   transition: background 160ms ease;
 }
 .popup-card__close:hover { background: #fff; }
-.popup-card__media { width: 100%; background: var(--bg-muted); max-height: 60vh; overflow: hidden; }
+.popup-card__media { width: 100%; background: var(--bg-muted); overflow: hidden; }
 .popup-card__media img { width: 100%; height: auto; display: block; object-fit: cover; }
 .popup-card__body { padding: 24px 24px 8px; }
 .popup-card__title { margin: 0 0 12px; font-size: 20px; font-weight: 700; letter-spacing: -0.01em; }
@@ -2721,19 +2721,21 @@ function PopupModal({ popup, index, onClose, onHideToday }) {
             <img src={popup.imageUrl} alt={popup.title || ""} />
           </div>
         )}
-        <div className="popup-card__body">
-          {popup.title && <h3 className="popup-card__title">{popup.title}</h3>}
-          {popup.content && (
-            <div className="popup-card__content">
-              {popup.content.split("\n").map((line, i) => line.trim() ? <p key={i}>{line}</p> : <br key={i}/>)}
-            </div>
-          )}
-          {popup.linkUrl && (
-            <button className="btn btn-primary popup-card__cta" onClick={go}>
-              자세히 보기 <Icon name="arrow-right" size={15}/>
-            </button>
-          )}
-        </div>
+        {(popup.title || popup.content || popup.linkUrl) && (
+          <div className="popup-card__body">
+            {popup.title && <h3 className="popup-card__title">{popup.title}</h3>}
+            {popup.content && (
+              <div className="popup-card__content">
+                {popup.content.split("\n").map((line, i) => line.trim() ? <p key={i}>{line}</p> : <br key={i}/>)}
+              </div>
+            )}
+            {popup.linkUrl && (
+              <button className="btn btn-primary popup-card__cta" onClick={go}>
+                자세히 보기 <Icon name="arrow-right" size={15}/>
+              </button>
+            )}
+          </div>
+        )}
         <div className="popup-card__foot">
           {popup.allowHideToday && (
             <label className="popup-card__hide">
