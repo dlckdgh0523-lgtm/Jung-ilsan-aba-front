@@ -3522,16 +3522,45 @@ function RichTextField({ label, value, onChange }) {
       theme: "snow",
       placeholder: "본문을 입력하세요…",
       modules: {
-        toolbar: [
-          [{ header: [1, 2, 3, false] }],
-          [{ size: QUILL_SIZES }],
-          ["bold", "italic", "underline", "strike"],
-          [{ color: [] }, { background: [] }],
-          [{ list: "ordered" }, { list: "bullet" }],
-          [{ align: [] }],
-          ["blockquote", "link"],
-          ["clean"],
-        ],
+        toolbar: {
+          container: [
+            [{ header: [1, 2, 3, false] }],
+            [{ size: QUILL_SIZES }],
+            ["bold", "italic", "underline", "strike"],
+            [{ color: [] }, { background: [] }],
+            [{ list: "ordered" }, { list: "bullet" }],
+            [{ align: [] }],
+            ["link", "image"],
+            ["blockquote"],
+            ["clean"],
+          ],
+          handlers: {
+            // Upload to the server (sharp-resized) and insert the returned URL at the cursor —
+            // avoids embedding huge base64 data URIs in the saved HTML.
+            image: function () {
+              const toolbar = this;
+              const input = document.createElement("input");
+              input.setAttribute("type", "file");
+              input.setAttribute("accept", "image/*");
+              input.onchange = () => {
+                const file = input.files && input.files[0];
+                if (!file) return;
+                if (!(window.ABA_API && window.ABA_API.upload)) { alert("이미지 업로드를 사용할 수 없습니다. 로그인 상태를 확인해 주세요."); return; }
+                const range = toolbar.quill.getSelection(true);
+                const at = range ? range.index : toolbar.quill.getLength();
+                window.ABA_API.upload(file)
+                  .then((r) => {
+                    if (r && r.url) {
+                      toolbar.quill.insertEmbed(at, "image", r.url, "user");
+                      toolbar.quill.setSelection(at + 1, 0, "user");
+                    }
+                  })
+                  .catch((e) => alert((e && e.message) || "이미지 업로드에 실패했습니다."));
+              };
+              input.click();
+            },
+          },
+        },
       },
     });
     if (value) q.clipboard.dangerouslyPasteHTML(value);
