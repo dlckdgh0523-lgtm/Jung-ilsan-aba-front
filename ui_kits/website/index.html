@@ -1448,10 +1448,23 @@ p, .body { font-size: var(--fs-body); line-height: var(--lh-relaxed); color: var
   font-size: 13px; color: var(--fg-3);
   font-variant-numeric: tabular-nums;
 }
-.notice-detail__body p {
-  font-size: 16px; line-height: 1.8; color: var(--fg-1);
-  margin: 0 0 18px;
-}
+.notice-detail__body { font-size: 16px; line-height: 1.8; color: var(--fg-1); }
+.notice-detail__body p { margin: 0 0 14px; }
+.notice-detail__body p:last-child, .notice-detail__body > *:last-child { margin-bottom: 0; }
+.notice-detail__body h1, .notice-detail__body h2, .notice-detail__body h3 { color: var(--fg-1); line-height: 1.35; font-weight: 700; margin: 22px 0 10px; }
+.notice-detail__body h1 { font-size: 26px; }
+.notice-detail__body h2 { font-size: 22px; }
+.notice-detail__body h3 { font-size: 19px; }
+.notice-detail__body ul, .notice-detail__body ol { margin: 0 0 14px; padding-left: 26px; }
+.notice-detail__body li { margin: 4px 0; }
+.notice-detail__body ul > li { list-style: disc; }
+.notice-detail__body ol > li { list-style: decimal; }
+.notice-detail__body li[data-list="bullet"] { list-style: disc; }
+.notice-detail__body li[data-list="ordered"] { list-style: decimal; }
+.notice-detail__body a { color: var(--brand-green-deep); text-decoration: underline; }
+.notice-detail__body strong { font-weight: 700; }
+.notice-detail__body blockquote { margin: 0 0 14px; padding: 8px 16px; border-left: 3px solid var(--brand-orange); background: var(--bg-muted); border-radius: 0 8px 8px 0; color: var(--fg-2); }
+.notice-detail__body img { max-width: 100%; height: auto; border-radius: 10px; }
 .notice-detail__files {
   margin: 0 0 24px; padding: 16px 18px;
   background: var(--bg-muted); border: 1px solid var(--border-1); border-radius: 14px;
@@ -3576,6 +3589,32 @@ function ProgramDetail({ program, onBack }) {
   );
 }
 
+/* Notice bodies may be rich HTML (from the admin editor) or legacy plain text.
+   Sanitize admin-authored HTML defensively (drop scripts/handlers/js: URLs); for legacy
+   plain text, preserve line breaks. */
+function escapeNoticeText(s) {
+  return String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+function sanitizeNoticeHtml(html) {
+  const tpl = document.createElement("template");
+  tpl.innerHTML = html;
+  tpl.content.querySelectorAll("script,style,iframe,object,embed,link,meta,form,input,.ql-ui").forEach((n) => n.remove());
+  tpl.content.querySelectorAll("*").forEach((el) => {
+    Array.from(el.attributes).forEach((a) => {
+      const name = a.name.toLowerCase();
+      if (name.startsWith("on")) el.removeAttribute(a.name);
+      else if ((name === "href" || name === "src") && /^\s*javascript:/i.test(a.value)) el.removeAttribute(a.name);
+    });
+  });
+  tpl.content.querySelectorAll("a[href]").forEach((a) => { a.setAttribute("target", "_blank"); a.setAttribute("rel", "noopener noreferrer"); });
+  return tpl.innerHTML;
+}
+function noticeBodyHtml(body) {
+  if (!body || !String(body).trim()) return "<p>본문이 등록되지 않았습니다.</p>";
+  if (/<[a-z][\s\S]*>/i.test(body)) return sanitizeNoticeHtml(body);
+  return String(body).split("\n").map((line) => (line.trim() ? "<p>" + escapeNoticeText(line) + "</p>" : "<br/>")).join("");
+}
+
 function NoticeDetail({ notice, onBack }) {
   React.useEffect(() => { if (window.lucide) window.renderLucideIcons(); });
   return (
@@ -3613,11 +3652,7 @@ function NoticeDetail({ notice, onBack }) {
           </div>
         )}
 
-        <div className="notice-detail__body">
-          {(notice.body || "본문이 등록되지 않았습니다.").split("\n").map((p, i) =>
-            p.trim() ? <p key={i}>{p}</p> : <br key={i}/>
-          )}
-        </div>
+        <div className="notice-detail__body" dangerouslySetInnerHTML={{ __html: noticeBodyHtml(notice.body) }} />
         <div className="notice-detail__cta">
           <button className="btn btn-secondary" onClick={onBack}><Icon name="arrow-left" size={14}/> 공지 목록</button>
         </div>
