@@ -2428,11 +2428,12 @@ button { font-family: inherit; }
 }
 .cms-field { display: grid; gap: 6px; }
 .cms-field > span { font-size: 13px; font-weight: 600; color: var(--fg-2); }
-.cms-field input, .cms-field select, .cms-field textarea {
+.cms-field input:not([type="checkbox"]), .cms-field select, .cms-field textarea {
   font-family: inherit; font-size: 14px; color: var(--fg-1);
   padding: 10px 12px; background: var(--bg-surface);
   border: 1px solid var(--border-2); border-radius: 10px;
 }
+.cms-field input[type="checkbox"] { width: 16px; height: 16px; flex-shrink: 0; accent-color: var(--brand-orange); cursor: pointer; }
 .cms-field input:focus, .cms-field select:focus, .cms-field textarea:focus {
   outline: none; border-color: var(--brand-orange);
   box-shadow: 0 0 0 4px rgba(248,173,70,0.18);
@@ -3983,7 +3984,7 @@ function NoticesAdminView({ notices }) {
           fields={[
             { key: "title", label: "제목" },
             { key: "date", label: "작성일", placeholder: "2026.05.25" },
-            { key: "pinned", label: "상단 고정", kind: "checkbox" },
+            { key: "pinned", label: "상단 고정", kind: "checkbox", hint: "체크하면 이 공지가 목록 맨 위에 '고정' 표시와 함께 올라갑니다." },
             { key: "image", label: "사진 (선택)", kind: "photo" },
             { key: "attachments", label: "첨부 파일 (엑셀·PDF 등)", kind: "files" },
             { key: "body", label: "본문", kind: "textarea" },
@@ -4387,10 +4388,13 @@ function CrudModal({ title, draft, onClose, onSave, fields }) {
             }
             if (f.kind === "checkbox") {
               return (
-                <label key={f.key} className="cms-field" style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
-                  <input type="checkbox" checked={!!get(f.key)} onChange={(e) => update(f.key, e.target.checked)} />
-                  <span>{f.label}</span>
-                </label>
+                <div key={f.key} className="cms-field" style={{ gap: 6 }}>
+                  <label style={{ display: "flex", flexDirection: "row", alignItems: "center", gap: 10, cursor: "pointer", margin: 0 }}>
+                    <input type="checkbox" checked={!!get(f.key)} onChange={(e) => update(f.key, e.target.checked)} />
+                    <span style={{ fontSize: 14, fontWeight: 600, color: "var(--fg-2)" }}>{f.label}</span>
+                  </label>
+                  {f.hint && <p style={{ margin: "2px 0 0 26px", fontSize: 12.5, color: "var(--fg-3)", lineHeight: 1.5 }}>{f.hint}</p>}
+                </div>
               );
             }
             if (f.kind === "toggle") {
@@ -4580,7 +4584,7 @@ function CrudModal({ title, draft, onClose, onSave, fields }) {
                     ))}
                     <label className="btn btn-ghost btn-sm" style={{cursor:"pointer",alignSelf:"flex-start"}}>
                       <i data-lucide="upload" style={{width:14,height:14}}/> 파일 첨부
-                      <input type="file" multiple hidden onChange={(e)=>{ addFiles(e.target.files); e.target.value=""; }}/>
+                      <input type="file" multiple hidden accept=".pdf,.hwp,.hwpx,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.csv,.txt,.rtf,.zip,image/*" onChange={(e)=>{ addFiles(e.target.files); e.target.value=""; }}/>
                     </label>
                   </div>
                 </label>
