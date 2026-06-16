@@ -2438,6 +2438,20 @@ button { font-family: inherit; }
 .cms-richtext .ql-container { border-radius: 0 0 10px 10px; border-color: var(--border-2); font-family: inherit; font-size: 14px; }
 .cms-richtext .ql-editor { min-height: 180px; max-height: 360px; overflow-y: auto; }
 .cms-richtext .ql-editor.ql-blank::before { color: var(--fg-4); font-style: normal; left: 12px; }
+/* Quill custom px sizes have no built-in labels → show the number in the dropdown */
+.cms-richtext .ql-snow .ql-picker.ql-size .ql-picker-label[data-value="12px"]::before, .cms-richtext .ql-snow .ql-picker.ql-size .ql-picker-item[data-value="12px"]::before { content: "12"; }
+.cms-richtext .ql-snow .ql-picker.ql-size .ql-picker-label[data-value="14px"]::before, .cms-richtext .ql-snow .ql-picker.ql-size .ql-picker-item[data-value="14px"]::before { content: "14"; }
+.cms-richtext .ql-snow .ql-picker.ql-size .ql-picker-label[data-value="16px"]::before, .cms-richtext .ql-snow .ql-picker.ql-size .ql-picker-item[data-value="16px"]::before { content: "16"; }
+.cms-richtext .ql-snow .ql-picker.ql-size .ql-picker-label[data-value="18px"]::before, .cms-richtext .ql-snow .ql-picker.ql-size .ql-picker-item[data-value="18px"]::before { content: "18"; }
+.cms-richtext .ql-snow .ql-picker.ql-size .ql-picker-label[data-value="24px"]::before, .cms-richtext .ql-snow .ql-picker.ql-size .ql-picker-item[data-value="24px"]::before { content: "24"; }
+.cms-richtext .ql-snow .ql-picker.ql-size .ql-picker-label[data-value="32px"]::before, .cms-richtext .ql-snow .ql-picker.ql-size .ql-picker-item[data-value="32px"]::before { content: "32"; }
+.cms-richtext .ql-snow .ql-picker.ql-size .ql-picker-label:not([data-value])::before, .cms-richtext .ql-snow .ql-picker.ql-size .ql-picker-label[data-value=""]::before { content: "크기"; }
+.cms-richtext .ql-snow .ql-picker.ql-size .ql-picker-item[data-value="12px"]::before { font-size: 12px; }
+.cms-richtext .ql-snow .ql-picker.ql-size .ql-picker-item[data-value="14px"]::before { font-size: 14px; }
+.cms-richtext .ql-snow .ql-picker.ql-size .ql-picker-item[data-value="16px"]::before { font-size: 16px; }
+.cms-richtext .ql-snow .ql-picker.ql-size .ql-picker-item[data-value="18px"]::before { font-size: 18px; }
+.cms-richtext .ql-snow .ql-picker.ql-size .ql-picker-item[data-value="24px"]::before { font-size: 24px; }
+.cms-richtext .ql-snow .ql-picker.ql-size .ql-picker-item[data-value="32px"]::before { font-size: 32px; }
 .cms-field input:focus, .cms-field select:focus, .cms-field textarea:focus {
   outline: none; border-color: var(--brand-orange);
   box-shadow: 0 0 0 4px rgba(248,173,70,0.18);
