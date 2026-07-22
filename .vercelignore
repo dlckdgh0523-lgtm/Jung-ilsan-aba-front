@@ -1,0 +1,5 @@
+# Vercel 배포 제외 목록 — 디자인 원본 자료는 배포하지 않음 (레포에는 보존)
+uploads/
+preview/
+SKILL.md
+API_SPEC.md
