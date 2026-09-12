@@ -1,7 +1,11 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "rewrites": [
-    { "source": "/", "destination": "/ui_kits/website/index.html" }
+    { "source": "/", "destination": "/ui_kits/website/index.html" },
+    { "source": "/sitemap.xml", "destination": "https://jungaba-api.onrender.com/v1/sitemap.xml" },
+    { "source": "/blog", "destination": "https://jungaba-api.onrender.com/v1/seo/blog" },
+    { "source": "/blog/:slug", "destination": "https://jungaba-api.onrender.com/v1/seo/blog/:slug" },
+    { "source": "/tags/:slug", "destination": "https://jungaba-api.onrender.com/v1/seo/tags/:slug" }
   ],
   "headers": [
     {

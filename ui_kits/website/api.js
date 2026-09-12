@@ -125,6 +125,7 @@
         api.get('/notices', { noAuth: true }),      // 7
         api.get('/gallery', { noAuth: true }),      // 8
         api.get('/popups/active', { noAuth: true }),// 9
+        api.get('/article-categories', { noAuth: true }), // 10 — 소식·블로그 드롭다운
       ]);
       var val = function (i) { return r[i].status === 'fulfilled' ? r[i].value : null; };
 
@@ -143,6 +144,7 @@
       var notices = unwrap(val(7)); if (notices) D.notices = notices;
       var gallery = unwrap(val(8)); if (gallery) D.gallery = gallery;
       var popups = unwrap(val(9)); if (popups) D.popups = popups;
+      var articleCategories = unwrap(val(10)); if (articleCategories) D.articleCategories = articleCategories;
 
       window.__ABA_LIVE__ = true;
     } catch (e) {
