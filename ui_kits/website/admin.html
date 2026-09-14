@@ -3533,6 +3533,45 @@ function NotiDropdown({ unreadConsults, blogDrafts, onConsult, onDraft, onClose 
 }
 
 /* ─── DASHBOARD ────────────────────────────────────────────── */
+/* ─── AI 노출 추이 카드 — 주간 자동 측정(trend.json)을 GitHub raw에서 읽는다 ── */
+const GEO_TREND_URL = "https://raw.githubusercontent.com/dlckdgh0523-lgtm/jung-ilsan-aba-backend/main/docs/geo-reports/trend.json";
+function GeoTrendCard() {
+  const [trend, setTrend] = useStateAdmin(null);
+  useEffectAdmin(() => {
+    fetch(GEO_TREND_URL, { cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((t) => setTrend(Array.isArray(t) ? t : null))
+      .catch(() => setTrend(null));
+  }, []);
+  if (!trend || trend.length === 0) return null;
+  const rows = trend.slice(-8);
+  const last = rows[rows.length - 1];
+  const prev = rows.length > 1 ? rows[rows.length - 2] : null;
+  const sign = (n) => (n > 0 ? "+" + n : String(n));
+  return (
+    <section className="cms__card" style={{ marginBottom: 18 }}>
+      <h3>📈 AI 노출 추이 <span style={{ fontWeight: 400, fontSize: 12.5, color: "var(--fg-3)" }}>— 매주 월요일 자동 측정 (질문 20개 기준)</span></h3>
+      <p className="cms-field__hint" style={{ margin: "6px 0 10px" }}>
+        "일산 ABA 추천" 같은 질문 20개를 AI에게 묻고, 답변에 우리 센터가 <strong>언급</strong>되거나 우리 홈페이지가 <strong>인용</strong>된 횟수를 셉니다. 숫자가 올라갈수록 AI가 우리 센터를 추천하기 시작했다는 뜻입니다.
+      </p>
+      <p style={{ fontWeight: 700, margin: "0 0 10px" }}>
+        최근({last.date}): 언급 {last.mention}/20 · 인용 {last.cited}/20
+        {prev && <span style={{ marginLeft: 8, fontWeight: 600, color: (last.mention - prev.mention) + (last.cited - prev.cited) > 0 ? "var(--brand-green-deep, #5BA31E)" : "var(--fg-3)" }}>
+          (직전 대비 언급 {sign(last.mention - prev.mention)} · 인용 {sign(last.cited - prev.cited)})
+        </span>}
+      </p>
+      <table className="cms-table" style={{ width: "100%", fontSize: 13 }}>
+        <thead><tr><th style={{textAlign:"left"}}>측정일</th><th style={{textAlign:"right"}}>언급</th><th style={{textAlign:"right"}}>인용</th></tr></thead>
+        <tbody>
+          {rows.map((t) => (
+            <tr key={t.date}><td>{t.date}</td><td style={{textAlign:"right"}}>{t.mention}</td><td style={{textAlign:"right"}}>{t.cited}</td></tr>
+          ))}
+        </tbody>
+      </table>
+    </section>
+  );
+}
+
 function DashboardView({ data, consultations, setView }) {
   // Live visitor stats: initial GET /stats/summary + /realtime/stats SSE (backend polls).
   const [summary, setSummary] = useStateAdmin({ online: 0, today: { visits: 0, visitors: 0 }, total: { visits: 0, visitors: 0 } });
@@ -3590,6 +3629,7 @@ function DashboardView({ data, consultations, setView }) {
           <li><strong>검색용 페이지 자동화</strong> — 센터소개·치료사·프로그램·FAQ·공지·소식이 검색엔진 전용 페이지로 자동 노출됩니다. 관리자에서 내용만 수정하면 따로 할 일이 없습니다.</li>
         </ul>
       </section>
+      <GeoTrendCard />
       <div className="cms__grid-2">
         <section className="cms__card">
           <header><h3>최근 상담 신청</h3><button className="btn btn-ghost btn-sm" onClick={()=>setView("consultations")}>전체보기</button></header>
