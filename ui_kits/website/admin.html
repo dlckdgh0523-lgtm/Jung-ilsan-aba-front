@@ -4106,7 +4106,7 @@ function AboutAdminView({ about, brand }) {
       <header><h3>센터 소개</h3><button className="btn btn-primary btn-sm" onClick={() => {
         if (!window.ABA_API) { setSaved(true); return; }
         Promise.all([
-          window.ABA_API.put("/site", { brand: { nameKo: draft.nameKo, tagline: draft.tagline, address: draft.address, phone: draft.phone, kakaoId: draft.kakaoId, hours: draft.hours } }),
+          window.ABA_API.put("/site", { brand: { nameKo: draft.nameKo, tagline: draft.tagline, address: draft.address, phone: draft.phone, fax: draft.fax, kakaoId: draft.kakaoId, hours: draft.hours } }),
           window.ABA_API.put("/about", { title: draft.title, body: draft.body }),
         ]).then(() => setSaved(true)).catch((e) => alert((e && e.message) || "저장에 실패했습니다."));
       }}><i data-lucide="save" style={{width:14,height:14}}/> 저장</button></header>
@@ -4116,6 +4116,7 @@ function AboutAdminView({ about, brand }) {
         <FieldText label="주소" value={draft.address} onChange={(v)=>update("address", v)} />
         <div className="cms-field-row">
           <FieldText label="전화번호" value={draft.phone} onChange={(v)=>update("phone", v)} />
+          <FieldText label="팩스" value={draft.fax} onChange={(v)=>update("fax", v)} />
           <FieldText label="카카오 ID" value={draft.kakaoId} onChange={(v)=>update("kakaoId", v)} />
         </div>
         <FieldText label="운영시간" value={draft.hours} onChange={(v)=>update("hours", v)} />
