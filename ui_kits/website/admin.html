@@ -5408,11 +5408,58 @@ function ArticleEditorModal({ draft, cats, progs, onClose, onSave }) {
           <button className="btn btn-secondary btn-sm" style={{ justifySelf: "start" }} onClick={() => update("faqItems", [...faqs, { q: "", a: "" }])}>
             <i data-lucide="plus" style={{width:14,height:14}}/> 질문 추가
           </button>
+
+          <SeoPreviewAndCheck d={d} relLocations={relLocations} />
         </div>
         <footer className="cms-modal__foot">
           <button className="btn btn-ghost" onClick={onClose}>취소</button>
           <button className="btn btn-primary" onClick={save}>{d.status === "published" ? "저장 후 발행" : "저장"}</button>
         </footer>
+      </div>
+    </div>
+  );
+}
+
+/* ─── 게시글 편집기: 검색 미리보기 + 콘텐츠 체크 (내부 품질 점검용 — 검색엔진 점수 아님) ─── */
+function SeoPreviewAndCheck({ d, relLocations }) {
+  const stripHtml = (h) => String(h || "").replace(/<[^>]+>/g, " ").replace(/&nbsp;/g, " ").replace(/\s+/g, " ").trim();
+  const bodyText = stripHtml(d.content);
+  const title = (d.seoTitle && d.seoTitle.trim()) || (d.title ? d.title + " | 정지은일산ABA" : "");
+  const desc = (d.seoDescription && d.seoDescription.trim()) || (d.excerpt && d.excerpt.trim()) || bodyText.slice(0, 160);
+  const slug = (d.slug && d.slug.trim()) || (d.title ? d.title.trim().replace(/\s+/g, "-") : "");
+  const url = "https://www.chungaba.com/blog/" + (slug || "…");
+  const hasLink = /href=/.test(d.content || "");
+  const mentionsRegion = /일산|고양|파주|운정|김포/.test((d.title || "") + bodyText.slice(0, 400));
+
+  const checks = [
+    { ok: !!(d.title && d.title.trim()), label: "제목이 있는가" },
+    { ok: title.length > 0 && title.length <= 60, label: "검색 제목 길이 (" + title.length + "자 / 60자 이내 권장)" },
+    { ok: desc.length >= 40 && desc.length <= 160, label: "설명 길이 (" + desc.length + "자 / 40–160자 권장)" },
+    { ok: !!d.thumbnail, label: "대표 이미지" },
+    { ok: bodyText.length >= 200, label: "본문 길이 (" + bodyText.length + "자 / 200자 이상 권장)" },
+    { ok: hasLink, label: "본문에 링크(관련 글·프로그램 연결)" },
+    ...(mentionsRegion ? [{ ok: relLocations.length > 0, label: "지역 글 → 관련 지역 연결" }] : []),
+  ];
+  const fails = checks.filter((c) => !c.ok).length;
+
+  return (
+    <div style={{ borderTop: "1px solid var(--border-1)", marginTop: 8, paddingTop: 14 }}>
+      <div style={{ fontWeight: 700, fontSize: 13.5, color: "var(--fg-1)", marginBottom: 8 }}>
+        검색 결과 미리보기 · 콘텐츠 체크
+        <span style={{ fontWeight: 400, fontSize: 12, color: "var(--fg-3)", marginLeft: 8 }}>내부 점검용이며 실제 검색 순위 점수가 아닙니다</span>
+      </div>
+      <div style={{ background: "#fff", border: "1px solid var(--border-1)", borderRadius: 10, padding: "12px 16px", marginBottom: 10 }}>
+        <div style={{ fontSize: 12, color: "#1a7f37", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{url}</div>
+        <div style={{ fontSize: 17, color: "#1a0dab", lineHeight: 1.4, margin: "2px 0" }}>{title || "(제목을 입력하면 여기에 표시됩니다)"}</div>
+        <div style={{ fontSize: 13, color: "var(--fg-2)", lineHeight: 1.55, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{desc || "(요약 또는 본문 앞부분이 표시됩니다)"}</div>
+      </div>
+      <div style={{ display: "grid", gap: 4 }}>
+        {checks.map((c, i) => (
+          <div key={i} style={{ fontSize: 12.5, color: c.ok ? "var(--brand-green-deep)" : "#B7791F", display: "flex", gap: 6, alignItems: "center" }}>
+            <span>{c.ok ? "✓" : "⚠"}</span> {c.label}
+          </div>
+        ))}
+        {fails === 0 && <div style={{ fontSize: 12.5, color: "var(--brand-green-deep)" }}>기본 점검 항목을 모두 충족했습니다.</div>}
       </div>
     </div>
   );
@@ -5647,9 +5694,46 @@ function BrandingAdminView({ brand }) {
 function SeoAdminView() {
   useEffectAdmin(() => { if (window.lucide) renderLucideIcons(); });
   const front = "https://www.chungaba.com";
+  const [health, setHealth] = useStateAdmin(null);
+  const [checking, setChecking] = useStateAdmin(false);
+  const runHealth = () => {
+    if (checking || !window.ABA_API) return;
+    setChecking(true);
+    window.ABA_API.get("/seo/health")
+      .then(setHealth)
+      .catch((e) => alert((e && e.message) || "점검에 실패했습니다."))
+      .finally(() => setChecking(false));
+  };
   return (
     <section className="cms__card">
-      <header><h3>SEO 설정 · 안내</h3></header>
+      <header>
+        <h3>SEO 설정 · 안내</h3>
+        <button className="btn btn-secondary btn-sm" disabled={checking} onClick={runHealth}>
+          <i data-lucide="activity" style={{width:14,height:14}}/> {checking ? "점검 중…" : "콘텐츠 상태 점검"}
+        </button>
+      </header>
+      {health && (
+        <div style={{ margin: "14px 24px 0", border: "1px solid var(--border-1)", borderRadius: 12, padding: "14px 18px", fontSize: 13.5 }}>
+          <div style={{ fontWeight: 700, color: "var(--fg-1)", marginBottom: 8 }}>
+            점검 결과 — 발행 글 {health.totals.published}건 ·
+            <span style={{ color: health.totals.errors ? "#C0392B" : "var(--brand-green-deep)" }}> 오류 {health.totals.errors}</span> ·
+            <span style={{ color: health.totals.warnings ? "#B7791F" : "var(--brand-green-deep)" }}> 경고 {health.totals.warnings}</span>
+            <span style={{ fontWeight: 400, fontSize: 12, color: "var(--fg-3)", marginLeft: 8 }}>(내부 품질 점검 — 검색엔진 점수 아님)</span>
+          </div>
+          {health.errors.map((e, i) => (
+            <div key={"e"+i} style={{ color: "#C0392B", padding: "2px 0" }}>✕ {e.where} — {e.message}</div>
+          ))}
+          {health.warnings.map((w, i) => (
+            <div key={"w"+i} style={{ color: "#B7791F", padding: "2px 0" }}>⚠ {w.where} — {w.message}</div>
+          ))}
+          {health.info.map((t, i) => (
+            <div key={"i"+i} style={{ color: "var(--fg-3)", padding: "2px 0" }}>ℹ {t}</div>
+          ))}
+          {health.totals.errors === 0 && health.totals.warnings === 0 && (
+            <div style={{ color: "var(--brand-green-deep)" }}>발견된 문제가 없습니다.</div>
+          )}
+        </div>
+      )}
       <div style={{ padding: 24, display: "grid", gap: 18, fontSize: 14, color: "var(--fg-2)", lineHeight: 1.7 }}>
         <div>
           <div style={{ fontWeight: 700, color: "var(--fg-1)", marginBottom: 6 }}>자동 생성되는 것들</div>
