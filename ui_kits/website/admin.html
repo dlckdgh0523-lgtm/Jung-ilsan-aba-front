@@ -3533,8 +3533,23 @@ function NotiDropdown({ unreadConsults, blogDrafts, onConsult, onDraft, onClose 
 }
 
 /* ─── DASHBOARD ────────────────────────────────────────────── */
-/* ─── AI 노출 추이 카드 — 주간 자동 측정(trend.json)을 GitHub raw에서 읽는다 ── */
+/* ─── AI 노출 추이 카드 — 주간 자동 측정(trend.json)을 부드러운 그래프로 ── */
 const GEO_TREND_URL = "https://raw.githubusercontent.com/dlckdgh0523-lgtm/jung-ilsan-aba-backend/main/docs/geo-reports/trend.json";
+
+/** Catmull-Rom → cubic bezier 변환으로 부드러운 곡선 path를 만든다. */
+function smoothPath(pts) {
+  if (pts.length === 0) return "";
+  if (pts.length === 1) return "M" + pts[0][0] + "," + pts[0][1];
+  let d = "M" + pts[0][0] + "," + pts[0][1];
+  for (let i = 0; i < pts.length - 1; i++) {
+    const p0 = pts[Math.max(0, i - 1)], p1 = pts[i], p2 = pts[i + 1], p3 = pts[Math.min(pts.length - 1, i + 2)];
+    const c1x = p1[0] + (p2[0] - p0[0]) / 6, c1y = p1[1] + (p2[1] - p0[1]) / 6;
+    const c2x = p2[0] - (p3[0] - p1[0]) / 6, c2y = p2[1] - (p3[1] - p1[1]) / 6;
+    d += " C" + c1x.toFixed(1) + "," + c1y.toFixed(1) + " " + c2x.toFixed(1) + "," + c2y.toFixed(1) + " " + p2[0] + "," + p2[1];
+  }
+  return d;
+}
+
 function GeoTrendCard() {
   const [trend, setTrend] = useStateAdmin(null);
   useEffectAdmin(() => {
@@ -3544,30 +3559,76 @@ function GeoTrendCard() {
       .catch(() => setTrend(null));
   }, []);
   if (!trend || trend.length === 0) return null;
-  const rows = trend.slice(-8);
+
+  const rows = trend.slice(-12);
   const last = rows[rows.length - 1];
   const prev = rows.length > 1 ? rows[rows.length - 2] : null;
   const sign = (n) => (n > 0 ? "+" + n : String(n));
+  const anyFailed = rows.some((t) => (t.ok != null ? t.ok : 20) < 15);
+
+  // ── SVG 좌표 계산 ──
+  const W = 640, H = 210, L = 34, R = 16, T = 16, B = 30;
+  const iw = W - L - R, ih = H - T - B;
+  const maxVal = Math.max(4, ...rows.map((t) => Math.max(t.mention, t.cited)));
+  const ymax = Math.min(20, Math.ceil(maxVal * 1.3));
+  const X = (i) => (rows.length === 1 ? L + iw / 2 : L + (iw * i) / (rows.length - 1));
+  const Y = (v) => T + ih - (ih * Math.min(v, ymax)) / ymax;
+  const mPts = rows.map((t, i) => [X(i), Y(t.mention)]);
+  const cPts = rows.map((t, i) => [X(i), Y(t.cited)]);
+  const grid = [0, Math.round(ymax / 2), ymax];
+  const short = (d) => String(d).slice(5).replace("-", "/");
+  const ORANGE = "#F8AD46", GREEN = "#5BA31E";
+
   return (
     <section className="cms__card" style={{ marginBottom: 18 }}>
-      <h3>📈 AI 노출 추이 <span style={{ fontWeight: 400, fontSize: 12.5, color: "var(--fg-3)" }}>— 매주 월요일 자동 측정 (질문 20개 기준)</span></h3>
-      <p className="cms-field__hint" style={{ margin: "6px 0 10px" }}>
-        "일산 ABA 추천" 같은 질문 20개를 AI에게 묻고, 답변에 우리 센터가 <strong>언급</strong>되거나 우리 홈페이지가 <strong>인용</strong>된 횟수를 셉니다. 숫자가 올라갈수록 AI가 우리 센터를 추천하기 시작했다는 뜻입니다.
+      <h3>📈 AI 노출 추이 <span style={{ fontWeight: 400, fontSize: 12.5, color: "var(--fg-3)" }}>— 매주 월요일 아침 자동 측정</span></h3>
+      <p className="cms-field__hint" style={{ margin: "6px 0 12px" }}>
+        "일산 ABA 추천해줘" 같은 <strong>학부모 질문 20개</strong>를 AI에게 묻고, 답변에서 우리 센터가
+        이야기된 횟수(<span style={{ color: ORANGE, fontWeight: 700 }}>● 언급</span>)와 우리 홈페이지가 근거로 쓰인
+        횟수(<span style={{ color: GREEN, fontWeight: 700 }}>● 인용</span>)를 셉니다. 선이 위로 갈수록 AI가 우리 센터를 더 자주 추천하고 있다는 뜻이에요.
       </p>
-      <p style={{ fontWeight: 700, margin: "0 0 10px" }}>
-        최근({last.date}): 언급 {last.mention}/20 · 인용 {last.cited}/20
-        {prev && <span style={{ marginLeft: 8, fontWeight: 600, color: (last.mention - prev.mention) + (last.cited - prev.cited) > 0 ? "var(--brand-green-deep, #5BA31E)" : "var(--fg-3)" }}>
-          (직전 대비 언급 {sign(last.mention - prev.mention)} · 인용 {sign(last.cited - prev.cited)})
-        </span>}
+      <div style={{ display: "flex", gap: 14, alignItems: "baseline", flexWrap: "wrap", marginBottom: 8 }}>
+        <span style={{ fontSize: 20, fontWeight: 800, color: ORANGE }}>언급 {last.mention}<small style={{ fontSize: 12, color: "var(--fg-3)", fontWeight: 500 }}>/20</small></span>
+        <span style={{ fontSize: 20, fontWeight: 800, color: GREEN }}>인용 {last.cited}<small style={{ fontSize: 12, color: "var(--fg-3)", fontWeight: 500 }}>/20</small></span>
+        {prev && (
+          <span style={{ fontSize: 12.5, fontWeight: 600, padding: "3px 10px", borderRadius: 999, background: "var(--bg-base)", border: "1px solid var(--border-1)", color: "var(--fg-2)" }}>
+            지난 측정 대비 언급 {sign(last.mention - prev.mention)} · 인용 {sign(last.cited - prev.cited)}
+          </span>
+        )}
+        <span style={{ fontSize: 12, color: "var(--fg-3)" }}>({last.date} 측정)</span>
+      </div>
+      <svg viewBox={"0 0 " + W + " " + H} style={{ width: "100%", height: "auto", display: "block" }} role="img" aria-label="AI 언급·인용 추이 그래프">
+        {grid.map((g) => (
+          <g key={g}>
+            <line x1={L} y1={Y(g)} x2={W - R} y2={Y(g)} stroke="var(--border-1, #EAE4D8)" strokeWidth="1" strokeDasharray={g === 0 ? "" : "3 4"} />
+            <text x={L - 7} y={Y(g) + 4} textAnchor="end" fontSize="10.5" fill="var(--fg-3, #8A8378)">{g}</text>
+          </g>
+        ))}
+        {/* 언급 곡선 (아래 은은한 면 채움) */}
+        {rows.length > 1 && (
+          <path d={smoothPath(mPts) + " L" + X(rows.length - 1) + "," + Y(0) + " L" + X(0) + "," + Y(0) + " Z"} fill={ORANGE} opacity="0.09" />
+        )}
+        <path d={smoothPath(mPts)} fill="none" stroke={ORANGE} strokeWidth="2.5" strokeLinecap="round" />
+        <path d={smoothPath(cPts)} fill="none" stroke={GREEN} strokeWidth="2.5" strokeLinecap="round" />
+        {rows.map((t, i) => {
+          const failed = (t.ok != null ? t.ok : 20) < 15;
+          return (
+            <g key={t.date}>
+              <circle cx={X(i)} cy={Y(t.mention)} r="4" fill={failed ? "#fff" : ORANGE} stroke={failed ? "#c0392b" : ORANGE} strokeWidth="2" />
+              <circle cx={X(i)} cy={Y(t.cited)} r="4" fill={failed ? "#fff" : GREEN} stroke={failed ? "#c0392b" : GREEN} strokeWidth="2" />
+              <text x={X(i)} y={H - 8} textAnchor="middle" fontSize="10.5" fill="var(--fg-3, #8A8378)">{short(t.date)}</text>
+            </g>
+          );
+        })}
+        {/* 마지막 값 라벨 */}
+        <text x={Math.min(X(rows.length - 1) + 8, W - 4)} y={Y(last.mention) - 7} fontSize="11" fontWeight="700" fill={ORANGE}>{last.mention}</text>
+        <text x={Math.min(X(rows.length - 1) + 8, W - 4)} y={Y(last.cited) + 14} fontSize="11" fontWeight="700" fill={GREEN}>{last.cited}</text>
+      </svg>
+      <p className="cms-field__hint" style={{ margin: "8px 0 0" }}>
+        ℹ️ AI 답변은 매번 조금씩 달라서 <strong>한 주 사이 ±1~2 변화는 측정 오차</strong>일 수 있어요. 한 방향으로 몇 주 이어지는 흐름을 봐 주세요.
+        {rows.length === 1 && " 아직 첫 측정 하나뿐이에요 — 다음 점은 다음 주 월요일에 자동으로 찍힙니다."}
+        {anyFailed && " ⚠️ 빨간 테두리 점은 그 주 측정이 일부 실패한 날입니다(키/잔액 확인 필요)."}
       </p>
-      <table className="cms-table" style={{ width: "100%", fontSize: 13 }}>
-        <thead><tr><th style={{textAlign:"left"}}>측정일</th><th style={{textAlign:"right"}}>언급</th><th style={{textAlign:"right"}}>인용</th></tr></thead>
-        <tbody>
-          {rows.map((t) => (
-            <tr key={t.date}><td>{t.date}</td><td style={{textAlign:"right"}}>{t.mention}</td><td style={{textAlign:"right"}}>{t.cited}</td></tr>
-          ))}
-        </tbody>
-      </table>
     </section>
   );
 }
