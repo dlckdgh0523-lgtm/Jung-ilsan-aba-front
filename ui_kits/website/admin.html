@@ -2333,6 +2333,37 @@ button { font-family: inherit; }
 }
 .cms__bell { position: relative; }
 .cms__bell.is-active { color: var(--brand-orange-deep); }
+/* 알림 드롭다운 — 종을 누르면 목록이 뜨고, 항목을 눌러야 이동한다 */
+.cms__bell-wrap { position: relative; }
+.cms__noti {
+  position: absolute; top: calc(100% + 10px); right: 0;
+  width: 340px; max-height: 420px; overflow-y: auto;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-1);
+  border-radius: 14px;
+  box-shadow: var(--shadow-lg);
+  z-index: 120;
+}
+.cms__noti-head {
+  padding: 12px 16px; font-size: 13px; font-weight: 700; color: var(--fg-2);
+  border-bottom: 1px solid var(--border-1);
+  display: flex; justify-content: space-between; align-items: center;
+}
+.cms__noti-group {
+  padding: 8px 16px 4px; font-size: 11px; font-weight: 700; color: var(--fg-4);
+  text-transform: uppercase; letter-spacing: 0.04em;
+}
+.cms__noti-item {
+  display: flex; gap: 10px; align-items: flex-start;
+  width: 100%; text-align: left; border: 0; background: none; cursor: pointer;
+  padding: 10px 16px; font-size: 13px; color: var(--fg-1);
+}
+.cms__noti-item:hover { background: var(--bg-muted); }
+.cms__noti-item i { flex: none; margin-top: 1px; color: var(--brand-orange-deep); }
+.cms__noti-item strong { display: block; font-weight: 600; line-height: 1.4; }
+.cms__noti-item span { display: block; font-size: 12px; color: var(--fg-3); margin-top: 1px; }
+.cms__noti-empty { padding: 28px 16px; text-align: center; font-size: 13px; color: var(--fg-3); }
+@media (max-width: 520px) { .cms__noti { width: min(92vw, 340px); } }
 .cms__bell-badge {
   position: absolute; top: 4px; right: 4px;
   min-width: 16px; height: 16px;
@@ -3045,7 +3076,7 @@ window.SITE_DATA = {
 <script src="config.js"></script>
 <script src="api.js"></script>
 <script type="text/babel" data-presets="react">/* global React */
-const { useState: useStateAdmin, useEffect: useEffectAdmin } = React;
+const { useState: useStateAdmin, useEffect: useEffectAdmin, useRef: useRefAdmin } = React;
 
 /* ─── Lucide icons — React-safe renderer ────────────────────────
    Lucide's createIcons() REPLACES each <i data-lucide> node with a
@@ -3187,7 +3218,8 @@ function AdminApp({ onLogout }) {
   const data = window.SITE_DATA;
 
   /* Consultations + notification badge */
-  const { consultations, unread, markAllRead, markRead, removeOne, toast, blogToast, clearBlogToast, blogPending, refreshBlogPending } = useConsultations();
+  const { consultations, unread, markAllRead, markRead, removeOne, toast, blogToast, clearBlogToast, blogDrafts, blogPending, refreshBlogPending } = useConsultations();
+  const [bellOpen, setBellOpen] = useStateAdmin(false);
 
   useEffectAdmin(() => { if (window.lucide) renderLucideIcons(); });
 
@@ -3251,22 +3283,28 @@ function AdminApp({ onLogout }) {
             <h2>{ADMIN_NAV.find(n => n.id === view).label}</h2>
           </div>
           <div className="cms__top-actions">
-            <button
-              className={"icon-btn cms__bell" + (unread + blogPending > 0 ? " is-active" : "")}
-              onClick={() => {
-                // 알림은 상담 전용이 아님: 새 상담이 있으면 상담으로, 아니면 검수 대기 초안으로.
-                if (unread > 0) { setView("consultations"); markAllRead(); }
-                else if (blogPending > 0) { setView("articles"); refreshBlogPending(); }
-                else { setView("consultations"); }
-              }}
-              aria-label="알림"
-              title={blogPending > 0 ? "블로그 검수 대기 " + blogPending + "건" : "알림"}
-            >
-              <i data-lucide="bell" style={{width:18,height:18}}/>
-              {unread + blogPending > 0 && (
-                <span className="cms__bell-badge">{unread + blogPending > 9 ? "9+" : unread + blogPending}</span>
+            <div className="cms__bell-wrap">
+              <button
+                className={"icon-btn cms__bell" + (unread + blogPending > 0 ? " is-active" : "")}
+                onClick={() => { setBellOpen((v) => !v); refreshBlogPending(); }}
+                aria-label="알림"
+                aria-expanded={bellOpen}
+              >
+                <i data-lucide="bell" style={{width:18,height:18}}/>
+                {unread + blogPending > 0 && (
+                  <span className="cms__bell-badge">{unread + blogPending > 9 ? "9+" : unread + blogPending}</span>
+                )}
+              </button>
+              {bellOpen && (
+                <NotiDropdown
+                  unreadConsults={consultations.filter((c) => !c.read).slice(0, 6)}
+                  blogDrafts={blogDrafts.slice(0, 6)}
+                  onConsult={(c) => { setBellOpen(false); markRead(c.id); setView("consultations"); }}
+                  onDraft={() => { setBellOpen(false); setView("articles"); refreshBlogPending(); }}
+                  onClose={() => setBellOpen(false)}
+                />
               )}
-            </button>
+            </div>
             <a className="btn btn-secondary btn-sm" href="index.html" target="_top"><i data-lucide="external-link" style={{width:14,height:14}}/> 사이트 보기</a>
           </div>
         </header>
@@ -3315,13 +3353,13 @@ function useConsultations() {
   const [list, setList] = useStateAdmin([]);
   const [toast, setToast] = useStateAdmin(null);
   const [blogToast, setBlogToast] = useStateAdmin(null);
-  // 블로그에서 들어와 아직 발행 전인 초안 수 — 사이드바/종 뱃지로 상시 표시.
-  const [blogPending, setBlogPending] = useStateAdmin(0);
+  // 블로그에서 들어와 아직 발행 전인 초안 목록 — 사이드바/종 뱃지 + 알림 드롭다운에 사용.
+  const [blogDrafts, setBlogDrafts] = useStateAdmin([]);
 
   const refreshBlogPending = () => {
     if (!window.ABA_API) return;
-    window.ABA_API.get("/articles?status=draft&pageSize=100&visible=all")
-      .then((r) => setBlogPending(((r && r.items) || []).filter((a) => a.sourceUrl).length))
+    window.ABA_API.get("/articles?status=draft&pageSize=100&visible=all&sort=createdAt:desc")
+      .then((r) => setBlogDrafts(((r && r.items) || []).filter((a) => a.sourceUrl)))
       .catch(() => {});
   };
 
@@ -3378,7 +3416,7 @@ function useConsultations() {
     if (window.ABA_API) window.ABA_API.del("/consultations/" + id).catch(() => {});
   };
 
-  return { consultations: list, unread, markAllRead, markRead, removeOne, toast, blogToast, clearBlogToast: () => setBlogToast(null), blogPending, refreshBlogPending };
+  return { consultations: list, unread, markAllRead, markRead, removeOne, toast, blogToast, clearBlogToast: () => setBlogToast(null), blogDrafts, blogPending: blogDrafts.length, refreshBlogPending };
 }
 
 /* ─── ACCOUNT: 비밀번호 변경 ─────────────────────────────────── */
@@ -3446,6 +3484,49 @@ function AccountAdminView() {
         </p>
       </div>
     </section>
+  );
+}
+
+/* ─── NOTIFICATION DROPDOWN (종 클릭 → 목록, 항목 클릭 → 이동) ── */
+function NotiDropdown({ unreadConsults, blogDrafts, onConsult, onDraft, onClose }) {
+  const ref = useRefAdmin(null);
+  useEffectAdmin(() => {
+    const onDown = (e) => { if (ref.current && !ref.current.contains(e.target)) onClose(); };
+    const onKey = (e) => { if (e.key === "Escape") onClose(); };
+    // 클릭이 종 버튼 자체에서 시작해도 닫히지 않게 다음 틱에 등록
+    const t = setTimeout(() => {
+      document.addEventListener("mousedown", onDown);
+      document.addEventListener("keydown", onKey);
+    }, 0);
+    return () => { clearTimeout(t); document.removeEventListener("mousedown", onDown); document.removeEventListener("keydown", onKey); };
+  }, []);
+  useEffectAdmin(() => { if (window.lucide) renderLucideIcons(); });
+  const empty = unreadConsults.length === 0 && blogDrafts.length === 0;
+  return (
+    <div className="cms__noti" ref={ref}>
+      <div className="cms__noti-head">알림</div>
+      {empty && <div className="cms__noti-empty">새 알림이 없습니다.</div>}
+      {unreadConsults.length > 0 && <div className="cms__noti-group">새 상담 신청 {unreadConsults.length}건</div>}
+      {unreadConsults.map((c) => (
+        <button key={c.id} className="cms__noti-item" onClick={() => onConsult(c)}>
+          <i data-lucide="inbox" style={{width:15,height:15}}/>
+          <div>
+            <strong>{c.parent || "익명"} 님의 상담 신청</strong>
+            <span>{c.topic || "분야 미지정"}{c.phone ? " · " + c.phone : ""}</span>
+          </div>
+        </button>
+      ))}
+      {blogDrafts.length > 0 && <div className="cms__noti-group">블로그 검수 대기 {blogDrafts.length}건</div>}
+      {blogDrafts.map((a) => (
+        <button key={a.id} className="cms__noti-item" onClick={() => onDraft(a)}>
+          <i data-lucide="rss" style={{width:15,height:15}}/>
+          <div>
+            <strong>{a.title || "(제목 없음)"}</strong>
+            <span>{(a.category && a.category.name) || "미분류"} · 검수 후 발행해 주세요</span>
+          </div>
+        </button>
+      ))}
+    </div>
   );
 }
 

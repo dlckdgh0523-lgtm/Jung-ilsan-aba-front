@@ -1864,50 +1864,112 @@ main.is-subpage > .director-profile:first-child { margin-top: 0; border-top: non
   .site-footer__credentials { justify-self: center; }
 }
 
-/* ─── KAKAO FAB ────────────────────────────────────────────── */
-.kakao-fab {
-  position: fixed; bottom: 24px; right: 24px;
+/* ─── FLOATING BUTTONS (카카오/네이버) ─────────────────────────
+   기본은 마크만 있는 작은 원. 호버(또는 키보드 포커스)하면 라벨이
+   옆으로 펼쳐진다. 터치 기기(hover 불가)는 원형 그대로 = 탭하면 동작. */
+.kakao-fab, .naver-fab {
+  position: fixed; right: 20px;
   z-index: 50;
-  display: inline-flex; align-items: center; gap: 10px;
-  background: var(--kakao); color: var(--kakao-fg);
-  border: none; cursor: pointer;
-  padding: 12px 20px 12px 12px;
+  display: inline-flex; align-items: center; gap: 0;
+  border: none; cursor: pointer; text-decoration: none;
+  padding: 8px;
   border-radius: 999px; font-weight: 700; font-size: 14px;
   box-shadow: var(--shadow-md);
   transition: transform 240ms var(--ease-out-soft),
               box-shadow 240ms var(--ease-out-soft);
 }
-.kakao-fab:hover { transform: translateY(-3px); box-shadow: var(--shadow-lg); }
-.kakao-fab__bubble {
-  width: 36px; height: 36px; border-radius: 999px; background: white;
+.kakao-fab { bottom: 20px; background: var(--kakao); color: var(--kakao-fg); }
+.naver-fab { bottom: 84px; background: #03C75A; color: #fff; }
+.kakao-fab__bubble, .naver-fab__bubble {
+  width: 40px; height: 40px; border-radius: 999px; background: white;
   display: inline-flex; align-items: center; justify-content: center;
+  flex: none;
+}
+.kakao-fab__label, .naver-fab__label {
+  max-width: 0; opacity: 0; overflow: hidden; white-space: nowrap;
+  margin-left: 0;
+  transition: max-width 280ms var(--ease-out-soft),
+              opacity 180ms var(--ease-out-soft),
+              margin-left 280ms var(--ease-out-soft);
+}
+@media (hover: hover) {
+  .kakao-fab:hover, .naver-fab:hover { transform: translateY(-3px); box-shadow: var(--shadow-lg); }
+  .kakao-fab:hover .kakao-fab__label, .naver-fab:hover .naver-fab__label {
+    max-width: 120px; opacity: 1; margin-left: 10px; padding-right: 8px;
+  }
+}
+.kakao-fab:focus-visible .kakao-fab__label, .naver-fab:focus-visible .naver-fab__label {
+  max-width: 120px; opacity: 1; margin-left: 10px; padding-right: 8px;
 }
 @media (max-width: 520px) {
-  .kakao-fab__label { display: none; }
-  .kakao-fab { padding: 8px; }
+  .kakao-fab, .naver-fab { right: 14px; padding: 6px; }
+  .kakao-fab__bubble, .naver-fab__bubble { width: 38px; height: 38px; }
+  .kakao-fab { bottom: 16px; }
+  .naver-fab { bottom: 72px; }
 }
 
-/* ─── NAVER BLOG FAB (sits above the Kakao FAB) ────────────── */
-.naver-fab {
-  position: fixed; bottom: 96px; right: 24px;
-  z-index: 50;
-  display: inline-flex; align-items: center; gap: 10px;
-  background: #03C75A; color: #fff;
-  border: none; cursor: pointer; text-decoration: none;
-  padding: 12px 20px 12px 12px;
-  border-radius: 999px; font-weight: 700; font-size: 14px;
-  box-shadow: var(--shadow-md);
-  transition: transform 240ms var(--ease-out-soft),
-              box-shadow 240ms var(--ease-out-soft);
+/* ─── HOME NEWS (히어로 아래: 공지사항 + 소식·블로그 최신 글) ── */
+.home-news { padding: 64px 0 72px; }
+.home-news__grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 24px; align-items: start; }
+.home-news__col { padding: 22px 24px 10px; }
+/* 3번째 칸: 오시는 길 — 카드 안에 지도를 꽉 채워 넣는다 */
+.home-news__mapcol { padding-bottom: 22px; }
+.home-news__map { margin-top: 14px; border-radius: 12px; box-shadow: none; }
+.home-news__map .kakao-map__bar { flex-direction: column; align-items: stretch; gap: 10px; padding: 14px 14px 12px; }
+.home-news__map .kakao-map__addr strong { font-size: 13.5px; line-height: 1.5; }
+.home-news__map .kakao-map__actions { gap: 6px; }
+.home-news__map .kakao-map__actions .btn { flex: 1; justify-content: center; padding: 8px 6px; font-size: 12.5px; white-space: nowrap; }
+.home-news__head {
+  display: flex; justify-content: space-between; align-items: center;
+  padding-bottom: 12px; border-bottom: 2px solid var(--fg-1);
 }
-.naver-fab:hover { transform: translateY(-3px); box-shadow: var(--shadow-lg); }
-.naver-fab__bubble {
-  width: 36px; height: 36px; border-radius: 999px; background: white;
-  display: inline-flex; align-items: center; justify-content: center;
+.home-news__head h3 {
+  margin: 0; font-size: 18px; font-weight: 800; color: var(--fg-1);
+  display: inline-flex; align-items: center; gap: 8px;
 }
-@media (max-width: 520px) {
-  .naver-fab__label { display: none; }
-  .naver-fab { padding: 8px; bottom: 84px; }
+.home-news__more {
+  font-size: 13px; font-weight: 600; color: var(--fg-3); text-decoration: none;
+  display: inline-flex; align-items: center; gap: 4px;
+}
+.home-news__more:hover { color: var(--brand-orange-deep); }
+.home-news__item {
+  display: block; padding: 14px 2px; text-decoration: none; color: inherit;
+  border-bottom: 1px solid var(--border-1);
+}
+.home-news__item:last-child { border-bottom: none; }
+.home-news__item:hover .home-news__title { color: var(--brand-orange-deep); }
+.home-news__top { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.home-news__title {
+  font-weight: 650; font-size: 15px; color: var(--fg-1); line-height: 1.45;
+  transition: color 160ms var(--ease-out-soft);
+  overflow: hidden; text-overflow: ellipsis; display: -webkit-box;
+  -webkit-line-clamp: 1; -webkit-box-orient: vertical;
+}
+.badge-new {
+  display: inline-block; vertical-align: 2px;
+  background: var(--brand-orange); color: #fff;
+  font-size: 10px; font-weight: 800; letter-spacing: 0.04em;
+  padding: 2px 7px; border-radius: 999px; margin-right: 7px;
+}
+.home-news__date { flex: none; font-size: 12.5px; color: var(--fg-4); font-variant-numeric: tabular-nums; }
+.home-news__excerpt {
+  margin: 5px 0 0; font-size: 13.5px; color: var(--fg-3); line-height: 1.65;
+  overflow: hidden; text-overflow: ellipsis; display: -webkit-box;
+  -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+}
+.home-news__empty { padding: 26px 2px; font-size: 13.5px; color: var(--fg-4); text-align: center; }
+@media (max-width: 1100px) {
+  /* 태블릿: 공지/블로그 2단 + 지도는 아래 전체 폭 */
+  .home-news__grid { grid-template-columns: 1fr 1fr; }
+  .home-news__mapcol { grid-column: 1 / -1; }
+  .home-news__map .kakao-map__bar { flex-direction: row; align-items: center; }
+  .home-news__map .kakao-map__actions .btn { flex: none; }
+}
+@media (max-width: 860px) {
+  .home-news { padding: 44px 0 52px; }
+  .home-news__grid { grid-template-columns: 1fr; gap: 16px; }
+  .home-news__mapcol { grid-column: auto; }
+  .home-news__map .kakao-map__bar { flex-direction: column; align-items: stretch; }
 }
 
 /* ─── Misc ─────────────────────────────────────────────────── */
@@ -4078,6 +4140,94 @@ function NoticesSection({ notices, asPage }) {
   );
 }
 
+/* ── Home news: 히어로 아래 공지사항 + 소식·블로그 최신 글 ────
+   새로 등록된 글(7일 이내)에는 NEW 배지, 각 글은 본문/요약 2줄 미리보기. */
+function HomeNewsSection({ notices }) {
+  const [articles, setArticles] = useStateS(null); // null = 로딩 전
+  useEffectS(() => {
+    if (!window.ABA_API) { setArticles([]); return; }
+    window.ABA_API.get("/articles?pageSize=3", { noAuth: true })
+      .then((r) => setArticles((r && r.items) || []))
+      .catch(() => setArticles([]));
+  }, []);
+
+  const NEW_MS = 7 * 24 * 60 * 60 * 1000;
+  const isNew = (iso) => !!iso && Date.now() - new Date(iso).getTime() < NEW_MS;
+  const strip = (html) =>
+    String(html || "").replace(/<[^>]+>/g, " ").replace(/&nbsp;|&#160;/g, " ").replace(/\s+/g, " ").trim();
+  const fmt = (iso) => (iso ? String(iso).slice(0, 10).replaceAll("-", ".") : "");
+
+  const topNotices = [...(notices || [])]
+    .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))
+    .slice(0, 3);
+  const topArticles = (articles || []).slice(0, 3);
+
+  return (
+    <section className="home-news" data-screen-label="Home News">
+      <div className="container">
+        <div className="home-news__grid">
+          <Reveal>
+            <div className="home-news__col card-surface">
+              <div className="home-news__head">
+                <h3><Icon name="megaphone" size={17}/> 공지사항</h3>
+                <a className="home-news__more" href="#notices">더보기 <Icon name="arrow-right" size={13}/></a>
+              </div>
+              {topNotices.length === 0 && <div className="home-news__empty">등록된 공지가 없습니다.</div>}
+              {topNotices.map((n) => (
+                <a key={n.id} className="home-news__item" href={"#notice-" + n.id}>
+                  <div className="home-news__top">
+                    <span className="home-news__title">
+                      {isNew(n.createdAt) && <span className="badge-new">NEW</span>}
+                      {n.title}
+                    </span>
+                    <span className="home-news__date">{n.date || fmt(n.createdAt)}</span>
+                  </div>
+                  {strip(n.body) && <p className="home-news__excerpt">{strip(n.body)}</p>}
+                </a>
+              ))}
+            </div>
+          </Reveal>
+          <Reveal delay={80}>
+            <div className="home-news__col card-surface">
+              <div className="home-news__head">
+                <h3><Icon name="newspaper" size={17}/> 소식·블로그</h3>
+                <a className="home-news__more" href="#blog">더보기 <Icon name="arrow-right" size={13}/></a>
+              </div>
+              {articles !== null && topArticles.length === 0 && (
+                <div className="home-news__empty">아직 등록된 게시글이 없습니다.</div>
+              )}
+              {topArticles.map((a) => (
+                <a key={a.id} className="home-news__item" href={"#article-" + encodeURIComponent(a.slug || a.id)}>
+                  <div className="home-news__top">
+                    <span className="home-news__title">
+                      {isNew(a.createdAt) && <span className="badge-new">NEW</span>}
+                      {a.title}
+                    </span>
+                    <span className="home-news__date">{fmt(a.publishedAt || a.createdAt)}</span>
+                  </div>
+                  {(a.excerpt || strip(a.content)) && (
+                    <p className="home-news__excerpt">{a.excerpt || strip(a.content)}</p>
+                  )}
+                </a>
+              ))}
+            </div>
+          </Reveal>
+          <Reveal delay={160}>
+            <div className="home-news__col home-news__mapcol card-surface">
+              <div className="home-news__head">
+                <h3><Icon name="map-pin" size={17}/> 오시는 길</h3>
+                <a className="home-news__more" href="#contact">상담 문의 <Icon name="arrow-right" size={13}/></a>
+              </div>
+              <KakaoMap brand={(window.SITE_DATA && window.SITE_DATA.brand) || {}} height={200} className="home-news__map" />
+            </div>
+          </Reveal>
+        </div>
+      </div>
+    </section>
+  );
+}
+window.HomeNewsSection = HomeNewsSection;
+
 /* ── Gallery (masonry) ─────────────────────────────────────── */
 function GallerySection({ gallery, asPage }) {
   const [lightbox, setLightbox] = useStateS(null);
@@ -4512,7 +4662,12 @@ function App() {
   const renderPage = () => {
     switch (route.name) {
       case "home":
-        return <HeroSlider slides={data.hero} onCta={handleNav} />;
+        return (
+          <>
+            <HeroSlider slides={data.hero} onCta={handleNav} />
+            <HomeNewsSection notices={data.notices} />
+          </>
+        );
       case "about":
         return (
           <>
