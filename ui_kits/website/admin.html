@@ -5149,7 +5149,7 @@ function FaqsAdminView() {
 }
 
 /* ─── CONTENT PLATFORM: 태그 선택 필드 ─────────────────────── */
-const ARTICLE_TAG_LIMIT = 8;
+const ARTICLE_TAG_LIMIT = 30; // 백엔드 ARTICLE_MAX_TAGS와 동일하게 유지
 function TagPickerField({ selected, onChange }) {
   const [all, setAll] = useStateAdmin([]);
   const [q, setQ] = useStateAdmin("");
