@@ -3117,6 +3117,7 @@ const ADMIN_NAV = [
   { id: "consultations", label: "상담 신청",   icon: "inbox" },
   { id: "menus",      label: "메뉴 관리",        icon: "menu" },
   { id: "sections",   label: "섹션 ON / OFF",  icon: "sliders" },
+  { id: "account",    label: "비밀번호 변경",    icon: "key-round" },
 ];
 
 /* ─── ROOT WRAPPER ─────────────────────────────────────────── */
@@ -3186,7 +3187,7 @@ function AdminApp({ onLogout }) {
   const data = window.SITE_DATA;
 
   /* Consultations + notification badge */
-  const { consultations, unread, markAllRead, markRead, removeOne, toast } = useConsultations();
+  const { consultations, unread, markAllRead, markRead, removeOne, toast, blogToast, clearBlogToast } = useConsultations();
 
   useEffectAdmin(() => { if (window.lucide) renderLucideIcons(); });
 
@@ -3275,9 +3276,20 @@ function AdminApp({ onLogout }) {
           {view === "consultations" && <ConsultationsView items={consultations} onRead={markRead} onRemove={removeOne} />}
           {view === "menus"         && <MenuAdminView nav={data.nav} />}
           {view === "sections"      && <SectionsAdminView />}
+          {view === "account"       && <AccountAdminView />}
         </div>
 
         {toast && <div className="cms-toast"><i data-lucide="bell" style={{width:18,height:18}}/> <div><strong>새 상담 신청</strong><span>{toast.parent || "익명"} · {toast.topic || "분야 미지정"}</span></div></div>}
+        {blogToast && (
+          <div className="cms-toast" style={{cursor:"pointer", bottom: toast ? 96 : undefined}}
+            onClick={() => { setView("articles"); clearBlogToast(); }}>
+            <i data-lucide="rss" style={{width:18,height:18}}/>
+            <div>
+              <strong>블로그에서 새 글 {blogToast.created}건을 가져왔습니다</strong>
+              <span>{(blogToast.articles && blogToast.articles[0] && blogToast.articles[0].title) || ""}{blogToast.created > 1 ? " 외 " + (blogToast.created - 1) + "건" : ""} · 눌러서 검수 후 발행</span>
+            </div>
+          </div>
+        )}
       </main>
     </div>
   );
@@ -3287,6 +3299,7 @@ function AdminApp({ onLogout }) {
 function useConsultations() {
   const [list, setList] = useStateAdmin([]);
   const [toast, setToast] = useStateAdmin(null);
+  const [blogToast, setBlogToast] = useStateAdmin(null);
 
   const load = () => {
     if (!window.ABA_API) return;
@@ -3310,6 +3323,14 @@ function useConsultations() {
           setTimeout(() => setToast(null), 4200);
         }
       });
+      // 블로그 동기화가 새 초안을 만들면 백엔드가 같은 스트림에 blog.synced를 쏜다.
+      es.addEventListener("blog.synced", (ev) => {
+        let d = null; try { d = JSON.parse(ev.data); } catch (e) {}
+        if (d && d.created) {
+          setBlogToast(d);
+          setTimeout(() => setBlogToast(null), 8000);
+        }
+      });
       // 'ping' heartbeat events are ignored; transport errors → EventSource auto-reconnects.
     }
     return () => { if (es) es.close(); };
@@ -3331,7 +3352,75 @@ function useConsultations() {
     if (window.ABA_API) window.ABA_API.del("/consultations/" + id).catch(() => {});
   };
 
-  return { consultations: list, unread, markAllRead, markRead, removeOne, toast };
+  return { consultations: list, unread, markAllRead, markRead, removeOne, toast, blogToast, clearBlogToast: () => setBlogToast(null) };
+}
+
+/* ─── ACCOUNT: 비밀번호 변경 ─────────────────────────────────── */
+function AccountAdminView() {
+  const [cur, setCur] = useStateAdmin("");
+  const [next, setNext] = useStateAdmin("");
+  const [confirm2, setConfirm2] = useStateAdmin("");
+  const [busy, setBusy] = useStateAdmin(false);
+  const [msg, setMsg] = useStateAdmin(null); // { ok: boolean, text: string }
+  useEffectAdmin(() => { if (window.lucide) renderLucideIcons(); });
+
+  const inputStyle = { padding: "10px 14px", borderRadius: 10, border: "1px solid var(--border-1)", fontSize: 14, background: "var(--bg-base)", width: "100%", maxWidth: 380 };
+  const ruleOk = next.length >= 10 && /[A-Za-z]/.test(next) && /[0-9]/.test(next);
+
+  const submit = () => {
+    setMsg(null);
+    if (!cur) { setMsg({ ok: false, text: "현재 비밀번호를 입력해 주세요." }); return; }
+    if (!ruleOk) { setMsg({ ok: false, text: "새 비밀번호는 10자 이상, 영문과 숫자를 모두 포함해야 합니다." }); return; }
+    if (next !== confirm2) { setMsg({ ok: false, text: "새 비밀번호 확인이 일치하지 않습니다." }); return; }
+    setBusy(true);
+    window.ABA_API.patch("/auth/password", { currentPassword: cur, newPassword: next })
+      .then((r) => {
+        // 서버가 다른 기기 세션을 전부 무효화하고 새 토큰을 준다 → 이 브라우저는 교체해서 유지.
+        if (r && r.token) window.ABA_API.setToken(r.token);
+        setCur(""); setNext(""); setConfirm2("");
+        setMsg({ ok: true, text: "비밀번호를 변경했습니다. 다른 기기에서는 다시 로그인해야 합니다." });
+      })
+      .catch((e) => {
+        const text = e && e.code === "INVALID_CREDENTIALS" ? "현재 비밀번호가 올바르지 않습니다."
+          : e && e.code === "PASSWORD_UNCHANGED" ? "현재 비밀번호와 다른 비밀번호를 사용해 주세요."
+          : e && e.code === "WEAK_PASSWORD" ? "새 비밀번호는 10자 이상, 영문과 숫자를 모두 포함해야 합니다."
+          : e && e.status === 429 ? "시도가 너무 잦습니다. 1분 뒤에 다시 시도해 주세요."
+          : (e && e.message) || "변경에 실패했습니다.";
+        setMsg({ ok: false, text });
+      })
+      .finally(() => setBusy(false));
+  };
+
+  return (
+    <section className="cms__card">
+      <header><h3>비밀번호 변경</h3></header>
+      <div style={{ padding: 24, display: "grid", gap: 16 }}>
+        <label style={{ display: "grid", gap: 6, fontSize: 13, fontWeight: 600, color: "var(--fg-2)" }}>
+          현재 비밀번호
+          <input type="password" autoComplete="current-password" style={inputStyle} value={cur} onChange={(e) => setCur(e.target.value)} />
+        </label>
+        <label style={{ display: "grid", gap: 6, fontSize: 13, fontWeight: 600, color: "var(--fg-2)" }}>
+          새 비밀번호
+          <input type="password" autoComplete="new-password" style={inputStyle} value={next} onChange={(e) => setNext(e.target.value)} />
+          <span style={{ fontSize: 12, fontWeight: 400, color: next && !ruleOk ? "#C0392B" : "var(--fg-3)" }}>10자 이상, 영문과 숫자를 모두 포함</span>
+        </label>
+        <label style={{ display: "grid", gap: 6, fontSize: 13, fontWeight: 600, color: "var(--fg-2)" }}>
+          새 비밀번호 확인
+          <input type="password" autoComplete="new-password" style={inputStyle} value={confirm2} onChange={(e) => setConfirm2(e.target.value)}
+            onKeyDown={(e) => { if (e.key === "Enter") submit(); }} />
+        </label>
+        {msg && <div style={{ fontSize: 13, fontWeight: 600, color: msg.ok ? "var(--brand-green-deep)" : "#C0392B" }}>{msg.text}</div>}
+        <div>
+          <button className="btn btn-primary btn-sm" disabled={busy} onClick={submit}>
+            <i data-lucide="key-round" style={{width:14,height:14}}/> {busy ? "변경 중…" : "비밀번호 변경"}
+          </button>
+        </div>
+        <p style={{ margin: 0, fontSize: 12.5, color: "var(--fg-3)", lineHeight: 1.6 }}>
+          변경하면 보안을 위해 다른 모든 기기에서 로그아웃됩니다. 지금 쓰고 있는 이 화면은 그대로 유지돼요.
+        </p>
+      </div>
+    </section>
+  );
 }
 
 /* ─── DASHBOARD ────────────────────────────────────────────── */
@@ -3614,7 +3703,13 @@ function useEditableList(initial, opts = {}) {
       return out;
     });
   };
-  return { items, create, update, remove, toggleVisible, move };
+  const reload = () => {
+    if (!useApi) return;
+    api.get("/" + resource + "?pageSize=100&visible=all&trashed=none")
+      .then(r => setItems((r && r.items) || []))
+      .catch(() => {});
+  };
+  return { items, create, update, remove, toggleVisible, move, reload };
 }
 
 function readImageFile(file, cb) {
@@ -5187,32 +5282,90 @@ function ArticleEditorModal({ draft, cats, progs, onClose, onSave }) {
 }
 
 function ArticlesAdminView() {
-  const { items, create, update, remove, toggleVisible } = useEditableList([], { idPrefix: "art", resource: "articles" });
+  const { items, create, update, remove, toggleVisible, reload } = useEditableList([], { idPrefix: "art", resource: "articles" });
   const [cats, setCats] = useStateAdmin([]);
   const [progs, setProgs] = useStateAdmin([]);
   const [editing, setEditing] = useStateAdmin(null);
+  const [sync, setSync] = useStateAdmin(null);      // GET /blog-sync/status 결과
+  const [syncing, setSyncing] = useStateAdmin(false);
   useEffectAdmin(() => {
     if (!window.ABA_API) return;
     window.ABA_API.get("/article-categories?pageSize=50&visible=all").then((r) => setCats((r && r.items) || [])).catch(() => {});
     // 관련 프로그램 select가 항상 전체 프로그램을 보여주도록 최신 목록을 받아온다.
     window.ABA_API.get("/programs?pageSize=100&visible=all").then((r) => setProgs((r && r.items) || [])).catch(() => {});
+    loadSyncStatus();
   }, []);
   useEffectAdmin(() => { if (window.lucide) renderLucideIcons(); });
   const catName = (a) => (a.category && a.category.name) || "-";
+
+  const loadSyncStatus = () => {
+    if (!window.ABA_API) return;
+    // 백엔드에 블로그 동기화가 없거나 꺼져 있으면 조용히 숨긴다.
+    window.ABA_API.get("/blog-sync/status").then(setSync).catch(() => setSync(null));
+  };
+  const runSync = () => {
+    if (syncing || !window.ABA_API) return;
+    setSyncing(true);
+    window.ABA_API.post("/blog-sync/run")
+      .then((r) => {
+        alert(r && r.created > 0
+          ? "블로그에서 새 글 " + r.created + "건을 가져왔습니다. 목록에서 검수 후 발행해 주세요."
+          : "새로 가져올 글이 없습니다. (블로그 새 글 " + (r ? r.fetched : 0) + "건 확인)");
+        reload(); loadSyncStatus();
+      })
+      .catch((e) => {
+        alert(e && e.code === "BLOG_SYNC_IN_PROGRESS" ? "이미 동기화가 실행 중입니다. 잠시 후 다시 확인해 주세요."
+          : (e && e.message) || "동기화에 실패했습니다.");
+        loadSyncStatus();
+      })
+      .finally(() => setSyncing(false));
+  };
+  const syncSummary = () => {
+    if (!sync || !sync.lastRun) return null;
+    const lr = sync.lastRun;
+    const when = lr.finishedAt || lr.startedAt;
+    const mins = Math.max(0, Math.round((Date.now() - new Date(when).getTime()) / 60000));
+    const ago = mins < 1 ? "방금" : mins < 60 ? mins + "분 전" : Math.round(mins / 60) + "시간 전";
+    if (lr.status === "error" || lr.error) return { warn: true, text: "마지막 동기화 " + ago + " · 오류 발생 — 다시 실행해 보세요" };
+    return { warn: false, text: "마지막 동기화 " + ago + " · 새 글 " + (lr.created || 0) + "건" + (sync.enabled ? " · 30분마다 자동 확인 중" : " · 자동 동기화 꺼짐") };
+  };
+  const ss = syncSummary();
+
   return (
     <section className="cms__card">
       <header>
         <h3>게시글 관리 ({items.length})</h3>
-        <button className="btn btn-primary btn-sm" onClick={() => setEditing({ _new: true, title: "", status: "draft", faqItems: [], tags: [] })}>
-          <i data-lucide="plus" style={{width:14,height:14}}/> 게시글 작성
-        </button>
+        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+          {sync && (
+            <button className="btn btn-secondary btn-sm" disabled={syncing} onClick={runSync} title="네이버 블로그의 새 글을 지금 가져옵니다">
+              <i data-lucide="rss" style={{width:14,height:14}}/> {syncing ? "동기화 중…" : "블로그 글 가져오기"}
+            </button>
+          )}
+          <button className="btn btn-primary btn-sm" onClick={() => setEditing({ _new: true, title: "", status: "draft", faqItems: [], tags: [] })}>
+            <i data-lucide="plus" style={{width:14,height:14}}/> 게시글 작성
+          </button>
+        </div>
       </header>
+      {ss && (
+        <div style={{ padding: "8px 24px 0", fontSize: 12.5, color: ss.warn ? "#C0392B" : "var(--fg-3)", display: "flex", alignItems: "center", gap: 6 }}>
+          <i data-lucide={ss.warn ? "alert-triangle" : "refresh-cw"} style={{width:13,height:13}}/> {ss.text}
+        </div>
+      )}
       <table className="cms__table">
         <thead><tr><th>제목</th><th>카테고리</th><th>태그</th><th>상태</th><th>발행일</th><th>조회</th><th></th></tr></thead>
         <tbody>
           {items.map((a) => (
             <tr key={a.id}>
-              <td style={{maxWidth:280}}><strong>{a.title || "(제목 없음)"}</strong></td>
+              <td style={{maxWidth:280}}>
+                <strong>{a.title || "(제목 없음)"}</strong>
+                {a.sourceUrl && (
+                  <a href={a.sourceUrl} target="_blank" rel="noopener noreferrer" title="네이버 블로그 원문 보기"
+                    style={{ display: "inline-flex", alignItems: "center", gap: 3, marginLeft: 8, fontSize: 11, fontWeight: 700, color: "#03C75A", textDecoration: "none", verticalAlign: "middle" }}>
+                    <span style={{ background: "#03C75A", color: "#fff", borderRadius: 5, padding: "1.5px 6px" }}>네이버</span>
+                    <i data-lucide="external-link" style={{width:11,height:11}}/>
+                  </a>
+                )}
+              </td>
               <td>{catName(a)}</td>
               <td>{(a.tags || []).length ? (a.tags || []).map((t) => "#" + t.name).join(" ") : "-"}</td>
               <td>
