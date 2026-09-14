@@ -3,6 +3,8 @@
   "rewrites": [
     { "source": "/", "destination": "/ui_kits/website/index.html" },
     { "source": "/sitemap.xml", "destination": "https://jungaba-api.onrender.com/v1/sitemap.xml" },
+    { "source": "/rss.xml", "destination": "https://jungaba-api.onrender.com/v1/rss.xml" },
+    { "source": "/notices", "destination": "https://jungaba-api.onrender.com/v1/seo/notices" },
     { "source": "/about", "destination": "https://jungaba-api.onrender.com/v1/seo/about" },
     { "source": "/programs", "destination": "https://jungaba-api.onrender.com/v1/seo/programs" },
     { "source": "/team", "destination": "https://jungaba-api.onrender.com/v1/seo/team" },
