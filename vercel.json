@@ -5,6 +5,7 @@
     { "source": "/sitemap.xml", "destination": "https://jungaba-api.onrender.com/v1/sitemap.xml" },
     { "source": "/about", "destination": "https://jungaba-api.onrender.com/v1/seo/about" },
     { "source": "/programs", "destination": "https://jungaba-api.onrender.com/v1/seo/programs" },
+    { "source": "/team", "destination": "https://jungaba-api.onrender.com/v1/seo/team" },
     { "source": "/faq", "destination": "https://jungaba-api.onrender.com/v1/seo/faq" },
     { "source": "/contact", "destination": "https://jungaba-api.onrender.com/v1/seo/contact" },
     { "source": "/blog", "destination": "https://jungaba-api.onrender.com/v1/seo/blog" },
