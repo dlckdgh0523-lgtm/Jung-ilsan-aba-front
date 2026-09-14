@@ -918,14 +918,16 @@ p, .body { font-size: var(--fs-body); line-height: var(--lh-relaxed); color: var
 .timeline__text { padding-top: 4px; color: var(--fg-1); font-size: 14px; line-height: 1.55; }
 
 .profile-card__papers { list-style: none; padding: 0; margin: 0; display: grid; gap: 14px; }
+/* li 자체는 블록 — 연도/제목 배치는 .paper-item__row(flex)가 담당한다.
+   (예전 grid 56px 1fr 레이아웃이 row 래퍼와 겹치며 제목이 세로로 깨지던 버그 수정) */
 .profile-card__papers li {
-  display: grid; grid-template-columns: 56px 1fr; gap: 14px;
   padding-bottom: 14px; border-bottom: 1px dashed var(--border-1);
 }
 .profile-card__papers li:last-child { border-bottom: none; padding-bottom: 0; }
 .paper__year {
   font-family: var(--font-mono); font-size: 12.5px; color: var(--brand-orange-deep);
   font-weight: 700; padding-top: 2px;
+  flex: none; width: 56px;
 }
 .paper__title { font-size: 14px; line-height: 1.6; color: var(--fg-1); }
 
