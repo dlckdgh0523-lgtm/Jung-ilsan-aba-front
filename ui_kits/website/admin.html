@@ -3533,6 +3533,77 @@ function NotiDropdown({ unreadConsults, blogDrafts, onConsult, onDraft, onClose 
 }
 
 /* ─── DASHBOARD ────────────────────────────────────────────── */
+/* ─── 방문자 추이 카드 — GET /stats/range (일별 방문자/조회수) ── */
+function VisitorTrendCard() {
+  const [days, setDays] = useStateAdmin(14);
+  const [rows, setRows] = useStateAdmin(null);
+  useEffectAdmin(() => {
+    if (!window.ABA_API) return;
+    window.ABA_API.get("/stats/range?days=" + days).then((r) => setRows(Array.isArray(r) ? r : null)).catch(() => setRows(null));
+  }, [days]);
+  if (!rows || rows.length === 0) return null;
+
+  const GREEN = "#5BA31E", ORANGE = "#F8AD46";
+  const W = 640, H = 200, L = 34, R = 16, T = 14, B = 28;
+  const iw = W - L - R, ih = H - T - B;
+  const maxVal = Math.max(4, ...rows.map((t) => Math.max(t.visitors, t.visits)));
+  const ymax = Math.ceil(maxVal * 1.15);
+  const X = (i) => (rows.length === 1 ? L + iw / 2 : L + (iw * i) / (rows.length - 1));
+  const Y = (v) => T + ih - (ih * Math.min(v, ymax)) / ymax;
+  const vPts = rows.map((t, i) => [X(i), Y(t.visitors)]);
+  const pPts = rows.map((t, i) => [X(i), Y(t.visits)]);
+  const grid = [0, Math.round(ymax / 2), ymax];
+  const short = (d) => String(d).slice(5).replace("-", "/");
+  const step = Math.max(1, Math.ceil(rows.length / 8));
+  const last = rows[rows.length - 1];
+  const sumVisitors = rows.reduce((a, t) => a + t.visitors, 0);
+  const best = rows.reduce((a, t) => (t.visitors > a.visitors ? t : a), rows[0]);
+
+  return (
+    <section className="cms__card" style={{ marginBottom: 18 }}>
+      <h3>👥 방문자 추이 <span style={{ fontWeight: 400, fontSize: 12.5, color: "var(--fg-3)" }}>— 홈페이지에 들어온 사람을 날짜별로 봅니다</span></h3>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8, margin: "6px 0 8px" }}>
+        <p className="cms-field__hint" style={{ margin: 0 }}>
+          <span style={{ color: GREEN, fontWeight: 700 }}>● 방문자</span>는 그날 들어온 사람 수,
+          <span style={{ color: ORANGE, fontWeight: 700 }}> ● 조회수</span>는 페이지가 열린 횟수입니다. 한 사람이 여러 페이지를 보면 조회수만 올라가요.
+        </p>
+        <div style={{ display: "flex", gap: 6 }}>
+          {[7, 14, 30].map((d) => (
+            <button key={d} className={"btn btn-sm " + (days === d ? "btn-primary" : "btn-secondary")} onClick={() => setDays(d)}>{d}일</button>
+          ))}
+        </div>
+      </div>
+      <div style={{ display: "flex", gap: 14, alignItems: "baseline", flexWrap: "wrap", marginBottom: 6 }}>
+        <span style={{ fontSize: 19, fontWeight: 800, color: GREEN }}>오늘 {last.visitors}<small style={{ fontSize: 12, color: "var(--fg-3)", fontWeight: 500 }}>명</small></span>
+        <span style={{ fontSize: 12.5, color: "var(--fg-2)" }}>최근 {days}일 합계 <strong>{sumVisitors}명</strong></span>
+        <span style={{ fontSize: 12.5, color: "var(--fg-3)" }}>가장 많이 온 날: {short(best.date)} ({best.visitors}명)</span>
+      </div>
+      <svg viewBox={"0 0 " + W + " " + H} style={{ width: "100%", height: "auto", display: "block" }} role="img" aria-label="일별 방문자 그래프">
+        {grid.map((g) => (
+          <g key={g}>
+            <line x1={L} y1={Y(g)} x2={W - R} y2={Y(g)} stroke="var(--border-1, #EAE4D8)" strokeWidth="1" strokeDasharray={g === 0 ? "" : "3 4"} />
+            <text x={L - 7} y={Y(g) + 4} textAnchor="end" fontSize="10.5" fill="var(--fg-3, #8A8378)">{g}</text>
+          </g>
+        ))}
+        {rows.length > 1 && (
+          <path d={smoothPath(vPts) + " L" + X(rows.length - 1) + "," + Y(0) + " L" + X(0) + "," + Y(0) + " Z"} fill={GREEN} opacity="0.08" />
+        )}
+        <path d={smoothPath(pPts)} fill="none" stroke={ORANGE} strokeWidth="2" strokeLinecap="round" opacity="0.85" />
+        <path d={smoothPath(vPts)} fill="none" stroke={GREEN} strokeWidth="2.5" strokeLinecap="round" />
+        {rows.map((t, i) => (
+          <g key={t.date}>
+            {(i % step === 0 || i === rows.length - 1) && (
+              <text x={X(i)} y={H - 6} textAnchor="middle" fontSize="10.5" fill="var(--fg-3, #8A8378)">{short(t.date)}</text>
+            )}
+            <circle cx={X(i)} cy={Y(t.visitors)} r={rows.length > 20 ? 2.5 : 3.5} fill={GREEN} />
+          </g>
+        ))}
+        <text x={Math.min(X(rows.length - 1) + 8, W - 4)} y={Y(last.visitors) - 7} fontSize="11" fontWeight="700" fill={GREEN}>{last.visitors}</text>
+      </svg>
+    </section>
+  );
+}
+
 /* ─── AI 노출 추이 카드 — 주간 자동 측정(trend.json)을 부드러운 그래프로 ── */
 const GEO_TREND_URL = "https://raw.githubusercontent.com/dlckdgh0523-lgtm/jung-ilsan-aba-backend/main/docs/geo-reports/trend.json";
 
@@ -3690,6 +3761,7 @@ function DashboardView({ data, consultations, setView }) {
           <li><strong>검색용 페이지 자동화</strong> — 센터소개·치료사·프로그램·FAQ·공지·소식이 검색엔진 전용 페이지로 자동 노출됩니다. 관리자에서 내용만 수정하면 따로 할 일이 없습니다.</li>
         </ul>
       </section>
+      <VisitorTrendCard />
       <GeoTrendCard />
       <div className="cms__grid-2">
         <section className="cms__card">
