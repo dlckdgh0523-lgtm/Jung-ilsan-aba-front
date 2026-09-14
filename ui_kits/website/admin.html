@@ -5220,6 +5220,16 @@ const ARTICLE_CHECKLIST = [
 function ArticleEditorModal({ draft, cats, progs, onClose, onSave }) {
   const [d, setD] = useStateAdmin({ status: "draft", faqItems: [], ...draft });
   const [tags, setTags] = useStateAdmin(draft.tags ? [...draft.tags] : []);
+  // 관련 프로그램/지역 — 다중 선택 (구버전 단수 값은 배열로 승격해서 로드)
+  const [relPrograms, setRelPrograms] = useStateAdmin(() =>
+    Array.isArray(draft.relatedPrograms) && draft.relatedPrograms.length
+      ? [...draft.relatedPrograms]
+      : draft.relatedProgram ? [draft.relatedProgram] : []);
+  const [relLocations, setRelLocations] = useStateAdmin(() =>
+    Array.isArray(draft.relatedLocations) && draft.relatedLocations.length
+      ? [...draft.relatedLocations]
+      : draft.relatedLocation ? [draft.relatedLocation] : []);
+  const toggleIn = (list, set, v) => set(list.includes(v) ? list.filter((x) => x !== v) : [...list, v]);
   const [checks, setChecks] = useStateAdmin({});
   // 고급 설정(글 주소·검색 문구)은 평소 접어둔다 — 몰라도 되는 항목이라 혼란 방지.
   const [showAdv, setShowAdv] = useStateAdmin(false);
@@ -5242,8 +5252,9 @@ function ArticleEditorModal({ draft, cats, progs, onClose, onSave }) {
       seoDescription: d.seoDescription || "",
       canonicalUrl: d.canonicalUrl || "",
       targetAudience: d.targetAudience || "",
-      relatedProgram: d.relatedProgram || "",
-      relatedLocation: d.relatedLocation || "",
+      // 다중 선택 배열이 기준 — 단수 필드는 서버가 첫 값으로 미러링한다.
+      relatedPrograms: relPrograms,
+      relatedLocations: relLocations,
       faqItems: faqs.filter((f) => f && (f.q || f.a)),
       isFeatured: !!d.isFeatured,
       status: d.status || "draft",
@@ -5343,21 +5354,39 @@ function ArticleEditorModal({ draft, cats, progs, onClose, onSave }) {
             <div style={{ fontWeight: 700, fontSize: 13.5, color: "var(--fg-1)" }}>센터 정보와 연결하기 (선택)</div>
             <p className="cms-field__hint">이 글이 어떤 프로그램·지역·아이들에 대한 글인지 표시해 두면, 글 아래에 관련 프로그램이 연결되고 검색엔진·AI가 글의 맥락을 더 잘 이해합니다.</p>
           </div>
-          <div className="cms-field-row">
-            <label className="cms-field">
-              <span>관련 프로그램</span>
-              <select value={d.relatedProgram || ""} onChange={(e) => update("relatedProgram", e.target.value)}>
-                <option value="">(연결 안 함)</option>
-                {programs.map((p) => <option key={p.id} value={p.id}>{p.title}</option>)}
-              </select>
-            </label>
-            <label className="cms-field">
-              <span>관련 지역</span>
-              <select value={d.relatedLocation || ""} onChange={(e) => update("relatedLocation", e.target.value)}>
-                <option value="">(연결 안 함)</option>
-                {["고양시", "일산서구", "일산동구", "파주시", "김포시"].map((l) => <option key={l} value={l}>{l}</option>)}
-              </select>
-            </label>
+          <div className="cms-field">
+            <span>관련 프로그램 (여러 개 선택 가능)</span>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 6 }}>
+              {programs.map((p) => {
+                const on = relPrograms.includes(p.id);
+                return (
+                  <button key={p.id} type="button" onClick={() => toggleIn(relPrograms, setRelPrograms, p.id)}
+                    style={{ padding: "7px 13px", borderRadius: 999, fontSize: 13, cursor: "pointer",
+                      border: "1px solid " + (on ? "var(--brand-green-deep)" : "var(--border-1)"),
+                      background: on ? "var(--brand-green-soft)" : "var(--bg-base)",
+                      color: on ? "var(--brand-green-deep)" : "var(--fg-2)", fontWeight: on ? 700 : 500 }}>
+                    {on ? "✓ " : ""}{p.title}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+          <div className="cms-field">
+            <span>관련 지역 (여러 개 선택 가능)</span>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 6 }}>
+              {["고양시", "일산서구", "일산동구", "파주시", "운정신도시", "김포시"].map((l) => {
+                const on = relLocations.includes(l);
+                return (
+                  <button key={l} type="button" onClick={() => toggleIn(relLocations, setRelLocations, l)}
+                    style={{ padding: "7px 13px", borderRadius: 999, fontSize: 13, cursor: "pointer",
+                      border: "1px solid " + (on ? "var(--brand-orange-deep)" : "var(--border-1)"),
+                      background: on ? "var(--brand-orange-soft)" : "var(--bg-base)",
+                      color: on ? "var(--brand-orange-deep)" : "var(--fg-2)", fontWeight: on ? 700 : 500 }}>
+                    {on ? "✓ " : ""}{l}
+                  </button>
+                );
+              })}
+            </div>
           </div>
           <FieldText label="대상 (예: 자폐스펙트럼 아동, 발달지연 아동)" value={d.targetAudience} onChange={(v) => update("targetAudience", v)} />
 
