@@ -3145,6 +3145,7 @@ const ADMIN_NAV = [
   { id: "faqs",       label: "FAQ 관리",         icon: "circle-help" },
   { id: "branding",   label: "로고 / 푸터",      icon: "badge-check" },
   { id: "seo",        label: "SEO 설정",         icon: "search" },
+  { id: "botvisits", label: "AI 크롤러", icon: "bot" },
   { id: "consultations", label: "상담 신청",   icon: "inbox" },
   { id: "menus",      label: "메뉴 관리",        icon: "menu" },
   { id: "sections",   label: "섹션 ON / OFF",  icon: "sliders" },
@@ -3326,7 +3327,8 @@ function AdminApp({ onLogout }) {
           {view === "faqs"          && <FaqsAdminView />}
           {view === "branding"      && <BrandingAdminView brand={data.brand || {}} />}
           {view === "seo"           && <SeoAdminView />}
-          {view === "consultations" && <ConsultationsView items={consultations} onRead={markRead} onRemove={removeOne} />}
+          {view === "botvisits" && <BotVisitsAdminView />}
+            {view === "consultations" && <ConsultationsView items={consultations} onRead={markRead} onRemove={removeOne} />}
           {view === "menus"         && <MenuAdminView nav={data.nav} />}
           {view === "sections"      && <SectionsAdminView />}
           {view === "account"       && <AccountAdminView />}
@@ -3579,6 +3581,15 @@ function DashboardView({ data, consultations, setView }) {
         ))}
       </div>
 
+      <section className="cms__card" style={{ marginBottom: 18 }}>
+        <h3>🆕 새로 추가된 기능 (2026.09)</h3>
+        <ul style={{ margin: "8px 0 0", paddingLeft: 18, fontSize: 13.5, lineHeight: 1.9, color: "var(--fg-2)" }}>
+          <li><strong>블로그 글 가져오기</strong> — <a href="#" onClick={(e) => { e.preventDefault(); setView("articles"); }}>게시글 관리</a>에서 버튼 한 번으로 네이버 블로그 새 글을 초안으로 가져옵니다. 검토 후 "발행"을 눌러야 홈페이지에 공개됩니다.</li>
+          <li><strong>AI 검수</strong> — 가져온 글을 열면 "AI 검수" 칸이 보완할 정보와 Q&amp;A 초안을 제안합니다. (글 내용에 있는 사실만 사용)</li>
+          <li><strong>AI 크롤러</strong> — <a href="#" onClick={(e) => { e.preventDefault(); setView("botvisits"); }}>AI 크롤러</a> 메뉴에서 구글·네이버·챗GPT 로봇이 우리 사이트를 읽어간 기록을 봅니다.</li>
+          <li><strong>검색용 페이지 자동화</strong> — 센터소개·치료사·프로그램·FAQ·공지·소식이 검색엔진 전용 페이지로 자동 노출됩니다. 관리자에서 내용만 수정하면 따로 할 일이 없습니다.</li>
+        </ul>
+      </section>
       <div className="cms__grid-2">
         <section className="cms__card">
           <header><h3>최근 상담 신청</h3><button className="btn btn-ghost btn-sm" onClick={()=>setView("consultations")}>전체보기</button></header>
@@ -5211,6 +5222,132 @@ function TagPickerField({ selected, onChange }) {
 }
 
 /* ─── CONTENT PLATFORM: 게시글 ─────────────────────────────── */
+
+/* ─── AI 크롤러 방문 통계 (GET /admin/bot-visits) ─────────────── */
+function BotVisitsAdminView() {
+  const [days, setDays] = useStateAdmin(30);
+  const [data, setData] = useStateAdmin(null);
+  const [err, setErr] = useStateAdmin("");
+  const load = (d) => {
+    if (!window.ABA_API) return;
+    setErr("");
+    window.ABA_API.get("/admin/bot-visits?days=" + d).then(setData).catch((e) => setErr((e && e.message) || "불러오지 못했습니다."));
+  };
+  useEffectAdmin(() => { load(days); }, [days]);
+  useEffectAdmin(() => { if (window.lucide) renderLucideIcons(); });
+  const fmt = (t) => { try { return new Date(t).toLocaleString("ko-KR", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" }); } catch (e) { return String(t); } };
+  return (
+    <section className="cms__card">
+      <header>
+        <h3><i data-lucide="bot" style={{width:18,height:18}}/> AI 크롤러 방문 기록</h3>
+        <div style={{ display: "flex", gap: 6 }}>
+          {[7, 30, 90].map((d) => (
+            <button key={d} className={"btn btn-sm " + (days === d ? "btn-primary" : "btn-secondary")} onClick={() => setDays(d)}>{d}일</button>
+          ))}
+        </div>
+      </header>
+      <p className="cms-field__hint" style={{ margin: "6px 0 14px" }}>
+        구글·네이버·챗GPT(GPTBot)·클로드(ClaudeBot)·퍼플렉시티 등 검색/AI 로봇이 우리 홈페이지를 읽어간 기록입니다.
+        로봇이 자주 다녀갈수록 검색과 AI 답변에 우리 센터가 나올 준비가 되고 있다는 뜻입니다. 일반 방문자는 집계되지 않습니다.
+      </p>
+      {err && <p style={{ color: "var(--danger, #c0392b)" }}>{err}</p>}
+      {!data && !err && <p>불러오는 중…</p>}
+      {data && (
+        <>
+          <p style={{ fontWeight: 700 }}>최근 {data.days}일 합계: {data.total}회</p>
+          {data.byBot.length === 0 && (
+            <p className="cms-field__hint">아직 기록된 방문이 없습니다. 등록 초기에는 정상이며, 보통 며칠~몇 주에 걸쳐 로봇 방문이 시작됩니다.</p>
+          )}
+          {data.byBot.length > 0 && (
+            <table className="cms-table" style={{ width: "100%", marginBottom: 18 }}>
+              <thead><tr><th style={{textAlign:"left"}}>로봇</th><th style={{textAlign:"right"}}>방문수</th><th style={{textAlign:"right"}}>마지막 방문</th></tr></thead>
+              <tbody>
+                {data.byBot.map((b) => (
+                  <tr key={b.bot}><td>{b.bot}</td><td style={{textAlign:"right"}}>{b.count}</td><td style={{textAlign:"right"}}>{b.lastAt ? fmt(b.lastAt) : "-"}</td></tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+          {data.recent.length > 0 && (
+            <>
+              <div style={{ fontWeight: 700, fontSize: 13.5, marginBottom: 6 }}>최근 방문 50건</div>
+              <div style={{ maxHeight: 320, overflow: "auto", border: "1px solid var(--border-1)", borderRadius: 10, padding: "6px 12px", fontSize: 13 }}>
+                {data.recent.map((r, i) => (
+                  <div key={i} style={{ display: "flex", gap: 10, justifyContent: "space-between", borderBottom: "1px dashed var(--border-1)", padding: "5px 0" }}>
+                    <span style={{ whiteSpace: "nowrap" }}>{r.bot}</span>
+                    <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", color: "var(--fg-3)" }}>{r.path}</span>
+                    <span style={{ whiteSpace: "nowrap", color: "var(--fg-3)" }}>{fmt(r.createdAt)}</span>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+        </>
+      )}
+    </section>
+  );
+}
+
+/* ─── 게시글 AI 검수(GEO) 패널 — 블로그에서 가져온 글의 승인 화면용 ── */
+function GeoReviewPanel({ articleId, onApplyQas }) {
+  const [st, setSt] = useStateAdmin({ loading: true, active: false, analysis: null, hidden: false, running: false });
+  const load = () => {
+    if (!window.ABA_API) { setSt((p) => ({ ...p, loading: false, hidden: true })); return; }
+    window.ABA_API.get("/blog-sync/geo-analysis/" + articleId)
+      .then((r) => setSt({ loading: false, active: !!r.active, analysis: r.analysis || null, hidden: false, running: false }))
+      .catch(() => setSt({ loading: false, active: false, analysis: null, hidden: true, running: false }));
+  };
+  useEffectAdmin(() => { load(); }, [articleId]);
+  const run = () => {
+    setSt((p) => ({ ...p, running: true }));
+    window.ABA_API.post("/blog-sync/geo-analysis/" + articleId)
+      .then((r) => setSt({ loading: false, active: true, analysis: r.analysis || null, hidden: false, running: false }))
+      .catch((e) => { alert((e && e.message) || "분석에 실패했습니다."); setSt((p) => ({ ...p, running: false })); });
+  };
+  if (st.loading || st.hidden) return null;
+  const a = st.analysis;
+  if (!a && !st.active) return null; // 기능 꺼짐 + 결과 없음 → 표시 안 함
+  return (
+    <div style={{ border: "1px solid var(--border-1)", borderRadius: 12, padding: "12px 14px", background: "var(--bg-base)", display: "grid", gap: 8 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <div style={{ fontWeight: 700, fontSize: 13.5 }}>🤖 AI 검수 (검색·AI 노출 향상 제안)</div>
+        {st.active && (
+          <button className="btn btn-secondary btn-sm" disabled={st.running} onClick={run}>{st.running ? "분석 중…" : a ? "다시 분석" : "지금 분석"}</button>
+        )}
+      </div>
+      {!a && <p className="cms-field__hint" style={{ margin: 0 }}>아직 분석 결과가 없습니다. "지금 분석"을 눌러 주세요.</p>}
+      {a && (
+        <>
+          <p className="cms-field__hint" style={{ margin: 0 }}>
+            숫자가 들어간 문장 {a.numericSentenceCount}개 · 출처/근거 언급 {a.sourceMention ? "있음 ✅" : "없음"} — 숫자(연령·횟수·기간)와 출처가 있는 글일수록 AI가 잘 인용합니다.
+          </p>
+          {a.error && <p className="cms-field__hint" style={{ margin: 0, color: "var(--danger, #c0392b)" }}>{a.error}</p>}
+          {a.missingFacts && a.missingFacts.length > 0 && (
+            <div>
+              <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 4 }}>이 글에 없어서 보완하면 좋은 정보</div>
+              <ul style={{ margin: 0, paddingLeft: 18, fontSize: 13, color: "var(--fg-2)" }}>
+                {a.missingFacts.map((m, i) => <li key={i}>{m}</li>)}
+              </ul>
+              <p className="cms-field__hint" style={{ margin: "4px 0 0" }}>※ 제안일 뿐입니다. 실제 사실만 본문에 직접 추가해 주세요 — AI가 내용을 만들어 넣지 않습니다.</p>
+            </div>
+          )}
+          {a.qas && a.qas.length > 0 && (
+            <div>
+              <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 4 }}>글 내용으로 만든 Q&amp;A 초안 {a.qas.length}개</div>
+              {a.qas.map((f, i) => (
+                <div key={i} style={{ fontSize: 13, marginBottom: 4 }}><strong>Q. {f.q}</strong><br/>A. {f.a}</div>
+              ))}
+              <button className="btn btn-secondary btn-sm" onClick={() => onApplyQas(a.qas)}>
+                <i data-lucide="plus" style={{width:14,height:14}}/> 이 Q&amp;A를 아래 FAQ에 추가 (발행 시 검색용 FAQ로 함께 노출)
+              </button>
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
 const ARTICLE_CHECKLIST = [
   "제목에 검색 의도가 명확한가?",
   "실제 독자(부모님)에게 도움이 되는 내용인가?",
@@ -5395,7 +5532,8 @@ function ArticleEditorModal({ draft, cats, progs, onClose, onSave }) {
           </div>
           <FieldText label="대상 (예: 자폐스펙트럼 아동, 발달지연 아동)" value={d.targetAudience} onChange={(v) => update("targetAudience", v)} />
 
-          <div style={{ borderTop: "1px solid var(--border-1)", margin: "8px 0 0", paddingTop: 14 }}>
+          {!d._new && d.id && <GeoReviewPanel articleId={d.id} onApplyQas={(qas) => update("faqItems", [...faqs, ...qas])} />}
+            <div style={{ borderTop: "1px solid var(--border-1)", margin: "8px 0 0", paddingTop: 14 }}>
             <div style={{ fontWeight: 700, fontSize: 13.5, color: "var(--fg-1)" }}>게시글 안 FAQ (선택)</div>
             <p className="cms-field__hint"><strong>이 글 하단에만</strong> 붙는 질문·답변입니다. 이 글 주제에 대한 질문을 2~3개 넣으면 검색에 도움이 됩니다. 센터 공통 질문("상담 예약은 어떻게 하나요?" 등)은 여기가 아니라 왼쪽 <strong>FAQ 관리</strong> 메뉴에서 관리하세요.</p>
           </div>
