@@ -3773,17 +3773,22 @@ function useEditableList(initial, opts = {}) {
       .catch(() => {});
   }, []);
 
+  // 검증 실패(422) 시 어느 필드가 왜 걸렸는지까지 보여준다 — "Validation failed"만 뜨면 원인을 알 수 없다.
+  const errText = (err, fallback) => {
+    const fields = err && err.fields ? Object.entries(err.fields).map(([k, v]) => "· " + k + ": " + v).join("\n") : "";
+    return ((err && err.message) || fallback) + (fields ? "\n" + fields : "");
+  };
   const create = (x) => {
     if (!useApi) { setItems(p => [...p, { id: opts.idPrefix + "-" + Date.now(), visible: true, ...x }]); return; }
     return api.post("/" + resource, x)
       .then(row => { setItems(p => [...p, row]); return row; })
-      .catch(err => { alert((err && err.message) || "추가에 실패했습니다."); throw err; });
+      .catch(err => { alert(errText(err, "추가에 실패했습니다.")); throw err; });
   };
   const update = (x) => {
     if (!useApi) { setItems(p => p.map(i => i.id === x.id ? x : i)); return; }
     return api.put("/" + resource + "/" + x.id, x)
       .then(row => { setItems(p => p.map(i => i.id === row.id ? row : i)); return row; })
-      .catch(err => { alert((err && err.message) || "수정에 실패했습니다."); throw err; });
+      .catch(err => { alert(errText(err, "수정에 실패했습니다.")); throw err; });
   };
   const remove = (id) => {
     if (!confirm("삭제하시겠습니까?")) return;
