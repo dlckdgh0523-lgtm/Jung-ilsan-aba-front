@@ -3636,6 +3636,7 @@ function GeoTrendCard() {
   const prev = rows.length > 1 ? rows[rows.length - 2] : null;
   const sign = (n) => (n > 0 ? "+" + n : String(n));
   const anyFailed = rows.some((t) => (t.ok != null ? t.ok : 20) < 15);
+  const mixedMethod = new Set(rows.map((t) => t.repeat || 1)).size > 1;
 
   // ── SVG 좌표 계산 ──
   const W = 640, H = 210, L = 34, R = 16, T = 16, B = 30;
@@ -3699,6 +3700,7 @@ function GeoTrendCard() {
         ℹ️ AI 답변은 매번 조금씩 달라서 <strong>한 주 사이 ±1~2 변화는 측정 오차</strong>일 수 있어요. 한 방향으로 몇 주 이어지는 흐름을 봐 주세요.
         {rows.length === 1 && " 아직 첫 측정 하나뿐이에요 — 다음 점은 다음 주 월요일에 자동으로 찍힙니다."}
         {anyFailed && " ⚠️ 빨간 테두리 점은 그 주 측정이 일부 실패한 날입니다(키/잔액 확인 필요)."}
+        {mixedMethod && " 📐 초기 점(9/14)은 측정 방식이 달라(1회 측정) 이후 점들과 직접 비교하면 안 돼요 — 같은 방식의 첫 자동 측정부터가 공식 기준선입니다."}
       </p>
     </section>
   );
